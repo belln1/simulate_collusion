@@ -1,0 +1,15 @@
+# Ignored Folders
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+# Ignored Filetypes
+*.Rproj
+*.pdf
+*.html
+*.bib
+*.tex
+*.log
+*.csv
+*.docx
+*.png
