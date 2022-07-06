@@ -7,7 +7,9 @@ library(DescTools)
 library(ggfortify)
 library(NCmisc)
 
-p <- list.functions.in.file("simulation.R")
+# Which packages do we use?
+p <- list.functions.in.file("analysis/scripts/simulation.R")
+summary(p)
 
 # Basic Functions --------------------------------------------------------------
 
