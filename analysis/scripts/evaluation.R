@@ -2,10 +2,12 @@ rm(list = ls())
 library(dplyr)
 library(purrr)
 library(tidyr)
-library(ggplot2)
 library(DescTools)
+library(gtools) # cut quantiles
+library(ggplot2)
 library(ggfortify)
-library(NCmisc)
+library(ggmosaic) # mosaic plots
+library(NCmisc) # which packages are used
 
 # todo: put common used functions in separate script
 # source(file = "analysis/scripts/simulation.R")
@@ -67,6 +69,11 @@ pop_duration_struc$n_firms_factor <- factor(pop_duration_struc$n_firms)
 pop_duration_unstruc$n_firms_factor <- factor(pop_duration_unstruc$n_firms)
 pop_duration_struc$rho_start_factor <- factor(pop_duration_struc$rho_start)
 pop_duration_unstruc$rho_start_factor <- factor(pop_duration_unstruc$rho_start)
+pop_duration_struc$duration_quant <-  quantcut(pop_duration_struc$duration, q = 4)
+pop_duration_unstruc$duration_quant <-  quantcut(pop_duration_unstruc$duration, q = 4)
+
+undetected_duration_unstruc <- filter(pop_duration_unstruc, detected==0)
+undetected_duration_struc <- filter(pop_duration_struc, detected==0)
 
 sample_duration_unstruc <- filter(pop_duration_unstruc, detected==1)
 sample_duration_struc <- filter(pop_duration_struc, detected==1)
@@ -92,16 +99,84 @@ mean_duration_diffs <- mean_duration_diffs %>%
 ## ==>> next: add diff num_cartels
 
 
-# Workflow --------------------------------------------------------------
 
-plot_mean_dur_n_rho(pop_duration_struc, "pop_struc")
-plot_mean_dur_n_rho(pop_duration_unstruc, "pop_unstruc")
+# Analyze Correlations --------------------------------------------------------------
+
 
 cor(pop_duration_struc$n_firms, pop_duration_struc$duration)
 cor(pop_duration_unstruc$n_firms, pop_duration_unstruc$duration)
 
 cor(pop_duration_struc$rho_start, pop_duration_struc$duration)
 cor(pop_duration_unstruc$rho_start, pop_duration_unstruc$duration)
+
+
+# Contingency Table
+table(sample_duration_struc$n_firms, sample_duration_struc$rho_start)
+chisq.test(sample_duration_struc$n_firms, sample_duration_struc$rho_start, simulate.p.value=TRUE)
+
+fisher.test(sample_duration_struc$n_firms, sample_duration_struc$rho_start)
+
+
+table(pop_duration_struc$n_firms, pop_duration_struc$duration_quant)
+chisq.test(pop_duration_struc$n_firms, pop_duration_struc$duration_quant)
+
+table(pop_duration_struc$duration_quant, pop_duration_struc$detected)
+chisq.test(pop_duration_struc$duration_quant, pop_duration_struc$detected)
+
+table(pop_duration_unstruc$duration_quant, pop_duration_unstruc$detected)
+chisq.test(pop_duration_unstruc$duration_quant, pop_duration_unstruc$detected)
+
+
+# Chi Square Test duration versus n firms
+
+table(pop_duration_unstruc$n_firms, pop_duration_unstruc$duration_quant, pop_duration_unstruc$detected)
+t_pop_unstruc <- table(pop_duration_unstruc$n_firms, pop_duration_unstruc$duration_quant)
+chisq.test(pop_duration_unstruc$n_firms, pop_duration_unstruc$duration_quant)
+chisq.test(t_pop_unstruc, simulate.p.value = TRUE)
+
+table(sample_duration_unstruc$n_firms, sample_duration_unstruc$duration_quant)
+t_sample_unstruc <- table(sample_duration_unstruc$n_firms, sample_duration_unstruc$duration_quant)
+chisq.test(t_sample_unstruc[1:4,])
+chisq.test(t_sample_unstruc, simulate.p.value = TRUE)
+chisq.test(t_sample_unstruc)
+
+
+table(undetected_duration_unstruc$n_firms, undetected_duration_unstruc$duration_quant)
+t_undetected_unstruc <- table(undetected_duration_unstruc$n_firms, undetected_duration_unstruc$duration_quant)
+chisq.test(t_undetected_unstruc, simulate.p.value = TRUE)
+
+table(sample_duration_struc$n_firms, sample_duration_struc$duration_quant)
+t_sample_struc <- table(sample_duration_struc$n_firms, sample_duration_struc$duration_quant)
+chisq.test(t_sample_struc, simulate.p.value = TRUE)
+
+table(undetected_duration_struc$n_firms, undetected_duration_struc$duration_quant)
+t_undetected_struc <- table(undetected_duration_struc$n_firms, undetected_duration_struc$duration_quant)
+chisq.test(t_undetected_struc, simulate.p.value = TRUE)
+
+ggplot(sample_duration_struc, aes(x=n_firms_factor, y=duration_quant)) +
+  geom_mosaic()
+
+ggplot(data = sample_duration_struc) +
+  geom_mosaic(aes(x = product(n_firms_factor, duration_quant), fill=n_firms_factor)) + 
+  labs(title='f(n firms)') +
+  theme_mosaic()
+  
+
+mosaicplot(~n_firms_factor + duration_quant, data=pop_duration_struc, main="Number of Firms versus Duration, Population with Changing Detection Probability", col=TRUE)
+mosaicplot(~n_firms_factor + duration_quant, data=pop_duration_unstruc, main="Number of Firms versus Duration, Population with Constant Detection Probability", col=TRUE)
+
+mosaicplot(~n_firms_factor + duration_quant, data=sample_duration_struc, main="Number of Firms versus Duration, Sample with Changing Detection Probability", col=TRUE)
+mosaicplot(~n_firms_factor + duration_quant, data=sample_duration_unstruc, main="Number of Firms versus Duration, Sample with Constant Detection Probability", col=TRUE)
+
+mosaicplot(~n_firms_factor + duration_quant, data=undetected_duration_struc, main="Number of Firms versus Duration, Undetected with Changing Detection Probability", col=TRUE)
+mosaicplot(~n_firms_factor + duration_quant, data=undetected_duration_unstruc, main="Number of Firms versus Duration, Undetected with Constant Detection Probability", col=TRUE)
+
+
+# Plotting --------------------------------------------------------------
+
+plot_mean_dur_n_rho(pop_duration_struc, "pop_struc")
+plot_mean_dur_n_rho(pop_duration_unstruc, "pop_unstruc")
+
 
 
 ggplot(data_struc, aes(x = n_firms, y = rho_start, size = mean_duration, color = mean_num_cartels)) +
@@ -228,6 +303,9 @@ ggplot(pop_duration_struc, aes(x = rho_start_factor, y = duration)) +
   ylab("duration") +
   theme_bw() +
   facet_grid(. ~ detected)
+
+
+
 
 
 
