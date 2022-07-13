@@ -1,43 +1,9 @@
-rm(list = ls())
-library(dplyr)
-library(purrr)
-library(tidyr)
-library(ggplot2)
-library(DescTools)
-library(ggfortify)
-library(NCmisc)
+source(file = "analysis/scripts/set_up.R")
 
-# Which packages do we use?
-p <- list.functions.in.file("analysis/scripts/simulation.R")
-summary(p)
-
-# Basic Functions --------------------------------------------------------------
-
-rep.row<-function(x,n){
-  matrix(rep(x,each=n),nrow=n)
-}
-rep.col<-function(x,n){
-  matrix(rep(x,each=n), ncol=n, byrow=TRUE)
-}
 
 
 # Plotting Functions --------------------------------------------------------------
 
-plot_deltas <- function(n) {
-  count <- i*10
-  sim <- ts(replicate(10, {count <<- count+1; get_deltas_r(r_1, allperiods, seed=count)}))
-  f <- autoplot(sim) +
-    guides(color="none") +
-    ggtitle(paste("Discount Factors for 10 Firms and ICC = 1-1/n for ", n, " Firms")) +
-    xlab("Time") +
-    ylab("Discount Factor delta") +
-    geom_hline(aes(yintercept=ICC_basic(n), linetype="Entry"), colour="blue") +
-    scale_linetype_manual(name="ICC", values = c(1), guide = guide_legend(override.aes = list(color = c("blue"))))
-  #print(f)
-}
-for (i in 2:10) {
-  # plot_deltas(i)
-}
 
 plot_sim <- function(title, sim, ylabel) {
   f <- autoplot(sim) +
@@ -62,61 +28,12 @@ plot_cartels <- function(cartels_population, cartels_sample, parms) {
 }
 
 
-# Evaluation Functions --------------------------------------------------------------
 
-get_starttimes <- function(cartels) {
-  d <- lag(cartels)
-  d[is.na(d)] = 0
-  e <- as.numeric((cartels - d) == 1)
-  starttimes <- matrix(e, ncol = ncol(cartels))
-}
-
-get_endtimes <- function(cartels) {
-  d <- lead(cartels)
-  d[is.na(d)] = 0
-  e <- as.numeric((cartels - d) == 1)
-  endtimes <- matrix(e, ncol = ncol(cartels))
-}
-
-get_mean_duration <- function(cartels){
-  ifelse(sum(cartels) > 0, sum(cartels)/sum(get_starttimes(cartels)), 0)
-}
-
-get_mean_sum_cartels <- function(cartels) {
-  mean(rowSums(cartels))
-}
 
 
 # Simulation Functions --------------------------------------------------------------
 
-get_delta_1 <- function(r){1/(1+r)}
-anyfunction <- function(x){atan(x*2)/(pi) + 0.5}
 
-# randomly return a number of +/- 0.01
-random_steps <- function(n, seed){
-  set.seed(seed)
-  x <- rbinom(n, 1, 0.5)
-  (2*x - 1)/100
-}
-
-## discount factor delta based on random walk for interest r
-get_deltas_r <- function(start, periods, seed) {
-  steps <- random_steps(periods-1, seed)
-  walk_r <- cumsum(c(start, steps))
-  deltas <- anyfunction(get_delta_1(walk_r))
-#  ts(deltas, start = c(1964,1), frequency = timefactor)
-} 
-
-
-# 1 industry with n firms, each with random walk deltas (same seed for every industry)
-ind_delta <- function(count, n_firms){
-  replicate(n_firms, {count <<- count+1; get_deltas_r(r_1, allperiods, seed=count)})
-}
-
-# Model 1: ICC depending on number of firms (cite Stigler 1964)
-ICC_basic <- function(n) {
-  1-1/n
-}
 
 # Model 2: ICC with fines and leniency (\citet{Bos:Davies:Harrington:Ormosi:2018})
 get_ICC_entry <- function(n, rho, gamma){
@@ -247,27 +164,6 @@ simulation <- function(i, parms, k) {
 }
 
 
-get_cartel_duration <- function(cartels) {
-  starttimes <- get_starttimes(cartels)
-  endtimes <- get_endtimes(cartels)
-  start <- as_tibble(which(starttimes==1, arr.ind = TRUE))
-  start <- rename(start, "start" = row)
-  end <- as_tibble(which(endtimes==1, arr.ind = TRUE))
-  end <- rename(end, "end" = row)
-  df <- cbind(start, end=end$end)
-  df$duration <- df$end - df$start + 1
-  df <- df %>%
-    mutate(cartel = 1) %>%
-    rename(industry = col) %>%
-    group_by(industry) %>%
-    mutate(cartel = cumsum(cartel),
-           startyear = ceiling(start/timefactor),
-           endyear = ceiling(end/timefactor),
-           duration_year = endyear - startyear + 1) %>%
-    arrange(industry, cartel, start) %>%
-    relocate(industry, cartel, start, end, duration)
-  return(df)
-}
 
 
 sim_parms <- function(n_industries, parms, k) {
@@ -301,16 +197,6 @@ sim_parms <- function(n_industries, parms, k) {
 
 
 # Workflow --------------------------------------------------------------
-
-seed_start <- 100
-
-allperiods <- 1000
-periodsNoLen <- allperiods/2
-periodsLen <- allperiods/2
-n_industries <- 100
-timefactor <- 12
-
-r_1 <- 0.03 #interest rate
 
 n_sim <- 36
 

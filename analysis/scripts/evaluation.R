@@ -1,17 +1,4 @@
-rm(list = ls())
-library(dplyr)
-library(purrr)
-library(tidyr)
-library(DescTools)
-library(gtools) # cut quantiles
-library(ggplot2)
-library(ggfortify)
-library(ggmosaic) # mosaic plots
-library(NCmisc) # which packages are used
-
-# todo: put common used functions in separate script
-# source(file = "analysis/scripts/simulation.R")
-
+source(file = "analysis/scripts/set_up.R")
 
 # Plotting Functions --------------------------------------------------------------
 
@@ -57,10 +44,7 @@ plot_mean_dur_n_rho <- function(data, plotname){
 
 
 
-
-
 # Read and prepare data --------------------------------------------------------------
-allperiods <- 1000
 
 pop_duration_unstruc <- read.table("analysis/data/pop_duration_unstruc.csv", header = TRUE, sep = ";")
 pop_duration_struc <- read.table("analysis/data/pop_duration_struc.csv", header = TRUE, sep = ";")
