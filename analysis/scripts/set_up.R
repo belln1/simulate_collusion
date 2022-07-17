@@ -12,6 +12,7 @@ library(forecast)
 library(ggmosaic) # mosaic plots
 library(NCmisc) # which packages are used
 
+library(kableExtra)
 
 # Which packages do we use?
 p <- list.functions.in.file("analysis/scripts/simulation.R")
