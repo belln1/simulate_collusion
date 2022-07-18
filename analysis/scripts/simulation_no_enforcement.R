@@ -10,7 +10,6 @@ ICC_basic <- function(n) {
 
 
 # Basic ICC for different number of firms  
-# todo: delete exit
 ICC_nfirms <- function(n_max){
   n_firms <- 2:n_max
   ICC <- tibble(n_firms, ICC = ICC_basic(n_firms))
@@ -56,7 +55,6 @@ for (i in 2:10) {
 
 # simulate deltas. set seed different for every industry and every row of parms
 n_max <- 10 # max number of firms
-# todo: refactor ICC_nfirms()
 parms <- ICC_nfirms(n_max) # different ICC dependent on n
 
 

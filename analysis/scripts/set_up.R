@@ -18,7 +18,6 @@ library(kableExtra)
 p <- list.functions.in.file("analysis/scripts/simulation.R")
 summary(p)
 
-# todo: put common used functions in separate script
 
 
 # Set basic parameters  --------------------------------------------------------------
@@ -45,7 +44,6 @@ rep.col<-function(x,n){
 
 # Simulation Functions  --------------------------------------------------------------
 
-# todo: rename to get_delta
 get_delta <- function(r){1/(1+r)}
 anyfunction <- function(x){atan(x*2)/(pi) + 0.5}
 
@@ -119,3 +117,16 @@ get_mean_sum_cartels <- function(cartels) {
   mean(rowSums(cartels))
 }
 
+
+# Plotting Functions  --------------------------------------------------------------
+
+plot_cartels <- function(title, sum_cartels, filename) {
+  f <- autoplot(sum_cartels) +
+    guides(color=guide_legend("")) +
+    ggtitle(title) +
+    xlab("Time") +
+  #  ylim(0,500) +
+    ylab("Number of cartels")
+  print(f)
+  ggsave(filename)
+}

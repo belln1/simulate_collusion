@@ -4,28 +4,20 @@ source(file = "analysis/scripts/set_up.R")
 
 # Plotting Functions --------------------------------------------------------------
 
-
-plot_sim <- function(title, sim, ylabel) {
+plot_sim <- function(title, sim, filename) {
   f <- autoplot(sim) +
-    #guides(color="none") +
+#    guides(color="none") +
     guides(color=guide_legend("")) +
     ggtitle(title) +
     xlab("Time") +
-    ylab(ylabel) 
-  # geom_hline(aes(yintercept=get_ICC_entry(n, rho, gamma), linetype="Entry"), colour="blue") +
-  # geom_hline(aes(yintercept=get_ICC_exit(n, rho, gamma, theta), linetype="Exit"), colour="red") +
-  # scale_linetype_manual(name="ICC", values = c(1, 1), guide = guide_legend(override.aes = list(color = c("blue", "red")))) 
+    ylab("Discount Factor delta")
+#    geom_hline(aes(yintercept=get_ICC_entry(n, rho, gamma), linetype="Entry"), colour="blue") +
+#    geom_hline(aes(yintercept=get_ICC_exit(n, rho, gamma, theta), linetype="Exit"), colour="red") +
+    scale_linetype_manual(name="ICC", values = c(1, 1), guide = guide_legend(override.aes = list(color = c("blue", "red"))))
   print(f)
+  ggsave(filename)
 }
 
-
-plot_cartels <- function(cartels_population, cartels_sample, parms) {
-  sim_cartels <- ts(data = cbind(rowSums(cartels_population), rowSums(cartels_sample)))
-  colnames(sim_cartels) <- c("Population", "Sample")
-  title <- paste("Simulated cartels, ", parms$theta_len, " leniency reduction, ", parms$structured, " structured ", parms$rho_start, " start detections prob. ", parms$n_firms, " firms")
-  ylabel <- "Number of cartels"
-  plot_sim(title, sim_cartels, ylabel)
-}
 
 
 
@@ -52,6 +44,11 @@ get_sample <- function(firms_in_cartel, detection){
   firms_in_cartel * detection
 }
 
+get_undetected <- function(firms_in_cartel, detection){
+  firms_in_cartel * (1 - detection)
+}
+
+
 # todo: delete return command
 get_detection <- function(periods, rho, seed){
   set.seed(seed)
@@ -74,14 +71,12 @@ check_firm_share <- function(firms, firm_share){
   as.numeric(rowSums(firms) >= ncol(firms)*firm_share)
 }
 
-# k is parm row
+# k is parm row and needed for seed
 simulation <- function(i, parms, k) {
   gamma = parms$gamma
   theta = c(rep(1, periodsNoLen), rep(parms$theta_len, periodsLen))
   rho <- matrix(parms$rho_start, nrow = allperiods, ncol = parms$n_firms)
   n_times_caught <- matrix(0, nrow = allperiods, ncol = parms$n_firms)
-  #ICC_entry <- matrix(ICC_basic(parms$n_firms), nrow = allperiods, ncol = parms$n_firms)
-  #ICC_exit <- matrix(ICC_basic(parms$n_firms), nrow = allperiods, ncol = parms$n_firms)
   ICC_entry <- get_ICC_entry(parms$n_firms, rho, gamma)
   ICC_exit <- get_ICC_exit(parms$n_firms, rho, gamma, theta)
   
@@ -119,9 +114,7 @@ simulation <- function(i, parms, k) {
         detection[1:j,] = Rev(v, margin = 1)
       }
       
-      # no cartel in next period (if there are next periods)
       if(j<allperiods){
-        firms_in_cartel[j+1,] = 0
         # increase number of times caught
         range <- (j+1):allperiods
         n_times_caught[range,] <- n_times_caught[range,] + rep.row(firms_in_cartel[j,] * detection[j,], allperiods-j)
@@ -131,15 +124,17 @@ simulation <- function(i, parms, k) {
       if (parms$structured & (allperiods-j)>1) {
         rho[range,] = increase_rho(rho[range,], n_times_caught[range,])
         
-        # ICC_entry[range,] <- ICC_basic(parms$n_firms)
-        #ICC_exit[range,] <- ICC_basic(parms$n_firms)
-        
         ICC_entry[range,] <- get_ICC_entry(parms$n_firms, rho[range,], gamma)
         ICC_exit[range,] <- get_ICC_exit(parms$n_firms, rho[range,], gamma, theta[range])
         in_cartel[range,] <- get_in_cartel(all_ind_delta[range,], ICC_entry[range,], ICC_exit[range,])
         firms_in_cartel[range,] <- check_firm_share(in_cartel[range,], 0.8) * in_cartel[range,] # make a function out of this
         count = count + j
         detection[range,] <- get_detection(allperiods-j, rho[range,], seed=count)
+      }
+      
+      # no cartel in next period (if there are next periods)
+      if(j<allperiods){
+        firms_in_cartel[j+1,] = 0
       }
     }
   }
@@ -149,23 +144,27 @@ simulation <- function(i, parms, k) {
   y <- which(x==max(x))
   z <- y[1]
   if(z>2){
-    sim <- ts(data = cbind(all_ind_delta[,1:5], ICC_entry[,z], ICC_exit[,z]))
+    sim <- ts(data = cbind(ICC_entry[,z], ICC_exit[,z], all_ind_delta))
     colnames(sim) <- c("firm 1", "firm 2", "firm 3", "firm 4", "firm 5", "ICC entry", "ICC exit")
-    title <- paste("Industry with ", parms$n_firms, " firms and increasing detection probability starting witih", parms$rho_start)
-    ylabel <- "Discount Factor"
-    #    plot_sim(title, sim, ylabel)
+    title <- paste("Industry with ", parms$n_firms, " firms and increasing detection probability starting with", parms$rho_start)
+    filename <- paste("analysis/figures/ICC/enforcement_struc_", parms$n_firms, "firms_", parms$rho_start, "rho.png")
+    plot_sim(title, sim, filename)
   }
+  
   sum(firms_in_cartel)
   firms_sample <- get_sample(firms_in_cartel, detection)
+  firms_undetected <- get_undetected(firms_in_cartel, detection)
+  
   sum(firms_sample)
-  cartel <- ifelse(rowSums(firms_in_cartel)>0, 1, 0)
-  cartel_sample <- ifelse(rowSums(firms_sample)>0, 1, 0)
-  return(list(cartel = cartel, cartel_sample = cartel_sample))
+  cartels_pop <- ifelse(rowSums(firms_in_cartel)>0, 1, 0)
+  cartels_undet <- ifelse(rowSums(firms_undetected)>0, 1, 0)
+  cartels_det <- ifelse(rowSums(firms_sample)>0, 1, 0)
+  return(list(cartels_pop = cartels_pop, cartels_undet = cartels_undet, cartels_det = cartels_det))
 }
 
 
 
-
+# todo: delete?
 sim_parms <- function(n_industries, parms, k) {
   cartels_population <- matrix(0, nrow = allperiods, ncol = n_industries)
   cartels_sample <- matrix(0, nrow = allperiods, ncol = n_industries)
@@ -211,6 +210,66 @@ parms <- tibble(
 
 parms <- parms %>%
   arrange(n_firms, rho_start, theta_len, structured)
+
+# array: dim = rows, columns, matrices
+cartels_detected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
+cartels_undetected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
+cartels_population <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
+
+for (k in 1:nrow(parms)) {  # for all parms
+  allcartels_det <- matrix(0, nrow = allperiods, ncol = n_industries)
+  allcartels_undet <- matrix(0, nrow = allperiods, ncol = n_industries)
+  allcartels_pop <- matrix(0, nrow = allperiods, ncol = n_industries)
+  for (i in 1:n_industries) {
+    # todo: this seed is not used
+    #count <- seed_start + (i-1)*n_industries*10 + (k-1)*100   # different seed for each parm
+    count <- seed_start + (i-1)*n_industries*10   # same seed for each parm
+    
+    sim_list <- simulation(i, parms[k,], k)
+    allcartels_undet[, i] <- sim_list$cartels_undet
+    allcartels_det[, i] <- sim_list$cartels_det
+    allcartels_pop[, i] <- sim_list$cartels_pop
+  }
+  cartels_detected[,, k] <- allcartels_det
+  cartels_undetected[,, k] <- allcartels_undet
+  cartels_population[,, k] <- allcartels_pop
+  #  cartels_population[,,k] <- allcartels_det + allcartels_undet
+}  
+
+saveRDS(cartels_detected, file = "analysis/data/cartels_enforcement_struc_detected.rds")
+saveRDS(cartels_undetected, file = "analysis/data/cartels_enforcement_struc_undetected.rds")
+saveRDS(cartels_population, file = "analysis/data/cartels_enforcement_struc_population.rds")
+
+parms$mean_sum_detected <- round(apply(cartels_detected, MARGIN=3, FUN=get_mean_sum_cartels), 3)
+parms$mean_duration_detected <- round(apply(cartels_detected, MARGIN=3, FUN=get_mean_duration), 0)
+parms$mean_sum_undetected <- round(apply(cartels_undetected, MARGIN=3, FUN=get_mean_sum_cartels), 3)
+parms$mean_duration_undetected <- round(apply(cartels_undetected, MARGIN=3, FUN=get_mean_duration), 0)
+#parms$mean_sum_population <- round(apply(cartels_population, MARGIN=3, FUN=get_mean_sum_cartels), 2)
+parms$mean_sum_population <- apply(cartels_population, MARGIN=3, FUN=get_mean_sum_cartels)
+parms$mean_duration_population <- round(apply(cartels_population, MARGIN=3, FUN=get_mean_duration), 3)
+
+write.table(parms, file = "analysis/data/parms_enforcement_struc.csv", row.names = FALSE, sep = ";")
+k <- kable(parms, "latex")
+save_kable(k, file = "analysis/data/parms_enforcement_struc.tex")
+
+
+# todo: draw all graphs in a loop
+rho <- 0.2
+x <- which(parms$rho_start == rho)
+c_det <- cartels_detected[,,x]
+c_undet <- cartels_undetected[,,x]
+c_pop <- cartels_population[,,x]
+
+title <- paste("Simulated cartels: 900 industries with each between 2 and 10 firms, increasing detection probability starting with ", rho)
+filename <- paste("analysis/figures/enforcement_cartels_struc_", rho, "rho.png")
+sim_cartels <- ts(data = cbind(rowSums(c_pop), rowSums(c_det), rowSums(c_undet)))
+colnames(sim_cartels) <- c("Population", "Detected", "Undetected")
+plot_cartels(title, sim_cartels, filename)
+
+
+# next: get duration
+
+## ---- old, check for correctness
 
 get_duration_cartels_blank <- function() { 
   tibble(

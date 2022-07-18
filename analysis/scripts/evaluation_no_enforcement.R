@@ -1,20 +1,6 @@
 # Evaluation  --------------------------------------------------------------
 source(file = "analysis/scripts/set_up.R")
 
-# Plotting  --------------------------------------------------------------
-
-plot_cartels <- function(title, sum_cartels, filename) {
-  f <- autoplot(sum_cartels) +
-    guides(color=guide_legend("")) +
-    ggtitle(title) +
-    xlab("Time") +
-    ylim(0,500) +
-    ylab("Number of cartels")
-  print(f)
-  ggsave(filename)
-}
-
-
 
 
 # Workflow  --------------------------------------------------------------
@@ -55,5 +41,4 @@ ggplot(parms, aes(x=n_firms, y=mean_duration_pop))  +
 ggsave("analysis/figures/no_enforcement_mean_duration.png")
 
 
-## next: save plots
 
