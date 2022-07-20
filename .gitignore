@@ -9,6 +9,7 @@
 *.html
 *.bib
 *.tex
+*.txt
 *.log
 *.csv
 *.docx

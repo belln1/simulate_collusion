@@ -104,7 +104,7 @@ for (i in 1:nrow(parms)) {
 }
 cartels_duration <- do.call(rbind, cd)
 
-write.table(cartels_duration, file = "analysis/data/pop_duration_no_enforce.csv", row.names = FALSE, sep = ";")
+write.table(cartels_duration, file = "analysis/data/duration_no_enforcement.csv", row.names = FALSE, sep = ";")
 
 
 

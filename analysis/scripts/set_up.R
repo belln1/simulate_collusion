@@ -21,6 +21,11 @@ summary(p)
 
 
 # Set basic parameters  --------------------------------------------------------------
+theta <- 0
+struc <- 1
+name <- paste(struc, "struc_", theta, "theta", sep = "")
+
+
 seed_start <- 100
 
 allperiods <- 1000
