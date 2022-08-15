@@ -46,7 +46,6 @@ rep.col<-function(x,n){
   matrix(rep(x,each=n), ncol=n, byrow=TRUE)
 }
 
-
 # Simulation Functions  --------------------------------------------------------------
 
 get_delta <- function(r){1/(1+r)}
@@ -72,7 +71,19 @@ get_deltas_r <- function(start, periods, seed) {
 ind_delta <- function(count, n_firms){
   replicate(n_firms, {count <<- count+1; get_deltas_r(r_1, allperiods, seed=count)})
 }
+x <- ind_delta(100, 3)
 
+
+# Simulate Model 1: ICC depending on number of firms (cite Stigler 1964)
+ICC_basic <- function(n) {
+  1-1/n
+}
+
+# Basic ICC for different number of firms  
+ICC_nfirms <- function(n_max){
+  n_firms <- 2:n_max
+  ICC <- tibble(n_firms, ICC = ICC_basic(n_firms))
+}
 
 # Evaluation Functions  --------------------------------------------------------------
 

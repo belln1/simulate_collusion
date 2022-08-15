@@ -151,7 +151,7 @@ simulation <- function(i, parms, k) {
   if(z>2){
     sim <- ts(data = cbind(ICC_entry[,z], ICC_exit[,z], all_ind_delta))
     #colnames(sim) <- c("firm 1", "firm 2", "firm 3", "firm 4", "firm 5", "ICC entry", "ICC exit")
-    colnames(sim) <- c(paste("firm", 1:ncol(all_ind_delta)),  "ICC entry", "ICC exit")
+    colnames(sim) <- c(paste("firm", 1:ncol(all_ind_delta)),  "ICC exit", "ICC entry")
 #    title <- paste("Industry with ", parms$n_firms, " firms and increasing detection probability starting with", parms$rho_start)
     title <- paste("Industry with ", parms$n_firms, " firms")
     filename <- paste("analysis/figures/ICC/enforce_deltas_", name, "_", parms$n_firms, "firms_", parms$rho_start, "rho.png", sep = "")
@@ -166,7 +166,7 @@ simulation <- function(i, parms, k) {
   cartels_pop <- ifelse(rowSums(firms_in_cartel)>0, 1, 0)
   cartels_undet <- ifelse(rowSums(firms_undetected)>0, 1, 0)
   cartels_det <- ifelse(rowSums(firms_sample)>0, 1, 0)
-  return(list(cartels_pop = cartels_pop, cartels_undet = cartels_undet, cartels_det = cartels_det))
+  return(list(cartels_pop = cartels_pop, cartels_undet = cartels_undet, cartels_det = cartels_det, ICC_entry = ICC_entry, ICC_exit = ICC_exit))
 }
 
 #c(paste("firm", 1:3), "ICC")

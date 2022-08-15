@@ -1,19 +1,6 @@
 source(file = "analysis/scripts/set_up.R")
 
 
-# Simulate Model 1: ICC depending on number of firms (cite Stigler 1964)
-ICC_basic <- function(n) {
-  1-1/n
-}
-
-
-
-
-# Basic ICC for different number of firms  
-ICC_nfirms <- function(n_max){
-  n_firms <- 2:n_max
-  ICC <- tibble(n_firms, ICC = ICC_basic(n_firms))
-}
 
 # entry in cartel for certain number of firms
 get_in_cartel <- function(ind, ICC){
