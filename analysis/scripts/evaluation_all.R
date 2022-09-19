@@ -13,11 +13,20 @@ for (i in 2:length(filename)) {
   pop_duration <- bind_rows(pop_duration, x)
 }
 
+pop_duration <- arrange(pop_duration, n_firms, rho_start, structured, industry, cartel, start, theta_len)
+pop_duration$len_reduction <- 1 - pop_duration$theta_len
+write.table(pop_duration, file = "analysis/data/duration_enforcement_all.csv", row.names = FALSE, sep = ";")
+
+
 # Prepare data
 #pop_duration$n_firms_factor <- factor(pop_duration$n_firms)
 #pop_duration$rho_start_factor <- factor(pop_duration$rho_start)
 #pop_duration$theta_len_factor <- factor(pop_duration$theta_len)
 pop_duration$duration_quant <-  quantcut(pop_duration$duration, q = 4)
+
+
+# NEXT: write.table..., add 1-theta
+
 
 
 # Chi-Square test for leniency and duration
@@ -40,6 +49,8 @@ name <- "all"
 write.table(mean_duration, file = paste("analysis/data/parms_enforcement_", name, ".csv", sep = ""), row.names = FALSE, sep = ";")
 k <- kbl(mean_duration, "latex", booktabs = T, linesep = "")
 save_kable(k, file = paste("analysis/data/parms_enforcement_", name, ".tex", sep = ""))
+
+mean_duration_all_enf <- read.table("analysis/data/parms_enforcement_all.csv", header = TRUE, sep = ";")
 
 
 # mean duration rho = 0.1
@@ -69,7 +80,7 @@ save_kable(k, file = paste("analysis/data/parms_enforcement_", name, ".tex", sep
 
 
 # Make Figures
-# Different ICC over all the same discount factors
+# Figure: Different ICC over all the same discount factors
 plot_deltas_n <- function(n) {
   #  count <- n*10  # plots different deltas for every graph
   count <- seed_start  # plots same deltas for every graph
@@ -106,9 +117,10 @@ plot_deltas <- function(sim) {
 # 5 firms, 0.15 rho
 n_firms <- 5
 rho <- 0.15
+gamma <- 0.9
+
 theta_len <- 1
 #structured <- 0
-gamma <- 0.9
 count <- seed_start  # plots same deltas for every graph
 deltas <- ts(replicate(n_firms, {count <<- count+1; get_deltas_r(r_1, allperiods, seed=count)}))
 ICC_no_enforc <- ICC_basic(n_firms)
@@ -133,5 +145,111 @@ sim <- ts(data = cbind(ICC_no_enforc, ICC_entry_0struc, ICC_exit_0struc, ICC_ent
 colnames(sim) <- c("ICC without detection", "ICC entry constant detection", "ICC exit constant detection", "ICC entry increasing detection", "ICC exit increasing detection", paste("firm", 1:ncol(deltas)))
 
 p <- plot_deltas_fines(sim)
-#print(p)
-ggsave(filename = "analysis/figures/ICC/all_5firms_0-15rho_1theta.png")
+print(p)
+#ggsave(filename = "analysis/figures/ICC/all_5firms_0-15rho_1theta.png")
+
+
+# Plot with different ICC for different leniency
+theta <- c(0, 0.5, 1)
+ICC_entry <- get_ICC_entry(n_firms, rho, gamma)
+ICC_exit <- get_ICC_exit(n_firms, rho = rho, theta = theta, gamma = gamma)
+sim <- ts(data = cbind(ICC_exit[1], ICC_exit[2], ICC_exit[3], deltas))
+colnames(sim) <- c("ICC entry = ICC exit (full leniency)", "ICC exit (0.5 leniency fine reduction", "ICC exit (no leniency)", paste("firm", 1:ncol(deltas)))
+p <- plot_deltas(sim)
+p
+
+# Figure: All Cartels over Time
+pallete <- c('blue', 'red')
+basic_autoplot <- function(sim_cartels){
+  f <- autoplot(sim_cartels) +
+    #    guides(color="none") +
+    guides(color=guide_legend("")) +
+    xlab("Time") +
+    ylab("Number of cartels") +
+    scale_colour_manual(values=pallete) +
+    theme(legend.position = "bottom")
+  print(f)
+}
+
+
+struc <- 0
+theta <- 1
+name <- paste(struc, "struc_", theta, "theta", sep = "")
+file_in <- paste("analysis/data/cartels_enforcement_", name, ".rds", sep = "")
+cartels_population <- readRDS(paste("analysis/data/cartels_enforcement_", name, "_population.rds", sep = ""))
+cartels_detected <- readRDS(paste("analysis/data/cartels_enforcement_", name, "_detected.rds", sep = ""))
+
+parmname <- paste("analysis/data/parms_enforcement_", name, ".csv", sep = "")
+parms <- read.table(parmname, header = TRUE, sep = ";")
+
+rho <- 0.15
+x <- which(parms$rho_start == rho)
+c_det <- cartels_detected[,,x]
+c_pop <- cartels_population[,,x]
+
+filename <- paste("analysis/figures/cartels/enforcement_cartels_", name, "_", rho, "rho.png", sep = "")
+sim_cartels <- ts(data = cbind(rowSums(c_pop), rowSums(c_det)))
+colnames(sim_cartels) <- c("Population", "Sample")
+basic_autoplot(sim_cartels)
+ggsave(filename)
+
+# Hazard rate estimation following Levenstein/Suslow: see hazard.do
+
+# Bryan and Eckard duration estimation
+calc_bryan_eckard <- function(cartels, space, model) {
+  tibble(
+    model = model,
+    space = space,
+    theta_min_1 = allperiods/length(cartels[,1]),  # theta^-1 = avg interarrival time
+#    theta_min_1_years = theta_min_1/12,
+    theta = 1/theta_min_1,
+#   theta_years = 1/theta_min_1_years,
+    
+    lambda_min_1 = mean(cartels$duration),
+#    lambda_min_1_years = lambda_min_1/12,
+    lambda = 1/lambda_min_1,
+#    lambda_years = 1/lambda_min_1_years,
+    
+    #number_alive = 1/theta_min_1 * lambda_min_1, # is the same
+    number_alive = round(theta/lambda),
+    size = length(cartels[,1]))
+}
+
+duration_model_1 <- read.table("analysis/data/duration_no_enforcement.csv", header = TRUE, sep = ";")
+b_and_e <- calc_bryan_eckard(cartels_duration, "population", 1)
+
+cartels_duration_all <- read.table("analysis/data/duration_enforcement_all.csv", header = TRUE, sep = ";")
+describe(cartels_duration_all)
+describe(filter(cartels_duration_all, structured==0))
+describe(filter(cartels_duration_all, structured==0, detected==1))
+describe(filter(cartels_duration_all, structured==0, detected==0))
+
+
+b_and_e[2,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 0), "population", 2)
+b_and_e[3,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 0, detected == 1), "sample", 2)
+b_and_e[4,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 0, detected == 0), "undetected", 2)
+
+b_and_e[5,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 1), "population", 3)
+b_and_e[6,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 1, detected == 1), "sample", 3)
+b_and_e[7,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 1, detected == 0), "undetected", 3)
+
+b_and_e[3:5] <- round(b_and_e[3:5], 2)
+b_and_e$lambda <- round(b_and_e$lambda, 3)
+
+
+write.table(b_and_e, file = "analysis/data/estimations/b_and_e.csv", row.names = FALSE, sep = ";")
+k <- kbl(b_and_e, "latex", booktabs = T, linesep = "")
+save_kable(k, file = "analysis/data/estimations/b_and_e.tex", sep = "")
+
+
+# Bryan and Eckard duration estimation for small n and rho
+describe(filter(cartels_duration_all, structured==0))
+describe(filter(cartels_duration_all, structured==0, detected==1, rho_start <= 0.2, n_firms <= 3)) # 208.34  223.09
+describe(filter(cartels_duration_all, structured==0, detected==1, rho_start > 0.2, n_firms>3)) # 132.59  114.63
+describe(filter(cartels_duration_all, structured==0, detected==0, rho_start <= 0.2, n_firms <= 3)) # 127.12   320.62
+describe(filter(cartels_duration_all, structured==0, detected==0, rho_start > 0.2, n_firms > 3)) # 84.18   50.73
+
+describe(filter(cartels_duration_all, structured==0, detected==1, n_firms <= 3)) # 167.70
+describe(filter(cartels_duration_all, structured==0, detected==1, n_firms>3)) # 154.86
+describe(filter(cartels_duration_all, structured==0, detected==0, n_firms <= 3)) # 242.69
+describe(filter(cartels_duration_all, structured==0, detected==0, n_firms > 3)) # 72.19

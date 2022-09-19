@@ -9,12 +9,28 @@ cartels <- readRDS(file = "analysis/data/cartels_no_enforcement.rds")
 
 sum_cartels <- ts(data = rowSums(cartels))
 title <- paste("Simulated cartels: 900 industries with each between 2 and 10 firms")
-filename <- "analysis/figures/no_enforcement_cartels.png"
+filename <- "analysis/figures/cartels/no_enforcement_cartels.png"
 plot_cartels(title, sum_cartels, filename)
 
+pallete <- c('blue')
 
-cartels_duration <- read.table("analysis/data/pop_duration_no_enforce.csv", header = TRUE, sep = ";")
 
+one_autoplot <- function(sum_cartels, pallette){
+  f <- autoplot(sum_cartels, colour=pallette, linetype=1) +
+    #    guides(color="none") +
+    guides(color=guide_legend("")) +
+    xlab("Time") +
+    ylab("Number of cartels") +
+    ylim(c(0,500)) +
+    theme(legend.position = "bottom")
+  print(f)
+}
+basic <- one_autoplot(sum_cartels, "blue")
+ggsave(filename)
+
+
+
+cartels_duration <- read.table("analysis/data/duration_no_enforcement.csv", header = TRUE, sep = ";")
 
 parms <- read.table("analysis/data/parms_no_enforcement.csv", header = TRUE, sep = ";")
 

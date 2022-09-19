@@ -33,48 +33,6 @@ plot_sim <- function(title, sim, filename) {
 
 
 # Model 2: ICC with fines and leniency (\citet{Bos:Davies:Harrington:Ormosi:2018})
-get_ICC_entry <- function(n, rho, gamma){
-  return(1-((1-rho)/(n+rho*gamma-rho)))
-}
-get_ICC_exit <- function(n, rho, gamma, theta){
-  return(1-((1-rho)/(n+rho*gamma-theta*rho*gamma-rho)))
-}
-
-
-increase_rho <- function(rho, n_times_caught) {
-  return(ifelse(n_times_caught > 0, rho * (1+1/2^n_times_caught), rho))
-}
-
-get_sample <- function(firms_in_cartel, detection){
-  firms_in_cartel * detection
-}
-
-get_undetected <- function(firms_in_cartel, detection){
-  firms_in_cartel * (1 - detection)
-}
-
-
-# todo: delete return command
-get_detection <- function(periods, rho, seed){
-  set.seed(seed)
-  x <- matrix(as.numeric(runif(periods) <= 20*rho/allperiods), nrow = periods)
-  return(x)
-}
-
-# does a firm want to be in a cartel?
-get_in_cartel <- function(ind, ICC_entry, ICC_exit) {
-  ind_entry <- ifelse(ind > ICC_entry, 1, 0) # ifelse keeps matrix, if_else makes big vector
-  ind_exit <- ifelse(ind < ICC_exit, -1, 0)
-  v <- ind_entry + ind_exit
-  w <- Reduce(function(x,y) ifelse(y==0, x, y), v, accumulate=TRUE) # fill 0-values with last non-0-value (makes big vector)
-  in_cartel <- if_else(w == -1, 0, 1) # change -1 to 0 (not in cartel)
-  in_cartel <- matrix(as.numeric(in_cartel), ncol = ncol(v))
-}
-
-# we have a cartel if enough firms want to be in a cartel. firm_share = 1 means complete cartels. vector with 0 and 1 in all times
-check_firm_share <- function(firms, firm_share){
-  as.numeric(rowSums(firms) >= ncol(firms)*firm_share)
-}
 
 # k is parm row and needed for seed
 simulation <- function(i, parms, k) {
