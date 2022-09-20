@@ -216,7 +216,7 @@ calc_bryan_eckard <- function(cartels, space, model) {
 }
 
 duration_model_1 <- read.table("analysis/data/duration_no_enforcement.csv", header = TRUE, sep = ";")
-b_and_e <- calc_bryan_eckard(cartels_duration, "population", 1)
+b_and_e <- calc_bryan_eckard(duration_model_1, "population", 1)
 
 cartels_duration_all <- read.table("analysis/data/duration_enforcement_all.csv", header = TRUE, sep = ";")
 describe(cartels_duration_all)
@@ -236,7 +236,6 @@ b_and_e[7,] <- calc_bryan_eckard(filter(cartels_duration_all, structured == 1, d
 b_and_e[3:5] <- round(b_and_e[3:5], 2)
 b_and_e$lambda <- round(b_and_e$lambda, 3)
 
-
 write.table(b_and_e, file = "analysis/data/estimations/b_and_e.csv", row.names = FALSE, sep = ";")
 k <- kbl(b_and_e, "latex", booktabs = T, linesep = "")
 save_kable(k, file = "analysis/data/estimations/b_and_e.tex", sep = "")
@@ -249,7 +248,52 @@ describe(filter(cartels_duration_all, structured==0, detected==1, rho_start > 0.
 describe(filter(cartels_duration_all, structured==0, detected==0, rho_start <= 0.2, n_firms <= 3)) # 127.12   320.62
 describe(filter(cartels_duration_all, structured==0, detected==0, rho_start > 0.2, n_firms > 3)) # 84.18   50.73
 
+describe(filter(cartels_duration_all, structured==1, detected==1, rho_start <= 0.2, n_firms <= 3)) # 157.60
+describe(filter(cartels_duration_all, structured==1, detected==1, rho_start > 0.2, n_firms>3)) # 114.95
+describe(filter(cartels_duration_all, structured==1, detected==0, rho_start <= 0.2, n_firms <= 3)) # 167.57
+describe(filter(cartels_duration_all, structured==1, detected==0, rho_start > 0.2, n_firms > 3)) # 42.18
+
+describe(filter(duration_model_1, n_firms <= 3)) # 1000.0
+describe(filter(duration_model_1, n_firms > 3)) # 116.16
+describe(filter(cartels_duration_all, structured==0, n_firms <= 3)) # 181.92
+describe(filter(cartels_duration_all, structured==0, n_firms>3)) # 104.00
 describe(filter(cartels_duration_all, structured==0, detected==1, n_firms <= 3)) # 167.70
 describe(filter(cartels_duration_all, structured==0, detected==1, n_firms>3)) # 154.86
 describe(filter(cartels_duration_all, structured==0, detected==0, n_firms <= 3)) # 242.69
 describe(filter(cartels_duration_all, structured==0, detected==0, n_firms > 3)) # 72.19
+
+describe(filter(cartels_duration_all, structured==1, n_firms <= 3)) # 123.92
+describe(filter(cartels_duration_all, structured==1, n_firms>3)) # 91.90
+describe(filter(cartels_duration_all, structured==1, detected==1, n_firms <= 3)) # 126.66
+describe(filter(cartels_duration_all, structured==1, detected==1, n_firms>3)) # 153.39
+describe(filter(cartels_duration_all, structured==1, detected==0, n_firms <= 3)) # 111.58
+describe(filter(cartels_duration_all, structured==1, detected==0, n_firms > 3)) # 56.12
+
+b_and_e_sep <- calc_bryan_eckard(filter(duration_model_1, n_firms <= 3), "population, small n", 1)
+b_and_e_sep[2,] <- calc_bryan_eckard(filter(duration_model_1, n_firms > 3), "population, large n", 1)
+
+b_and_e_sep[3,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==0, detected==1, n_firms <= 3), "sample, small n", 2)
+b_and_e_sep[4,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==0, detected==1, n_firms > 3), "sample, large n", 2)
+
+b_and_e_sep[5,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==0, detected==0, n_firms <= 3), "undetected, small n", 2)
+b_and_e_sep[6,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==0, detected==0, n_firms > 3), "undetected, large n", 2)
+
+b_and_e_sep[7,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==0, n_firms <= 3), "population, small n", 2)
+b_and_e_sep[8,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==0, n_firms > 3), "population, large n", 2)
+
+b_and_e_sep[9,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==1, detected==1, n_firms <= 3), "sample, small n", 3)
+b_and_e_sep[10,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==1, detected==1, n_firms > 3), "sample, large n", 3)
+
+b_and_e_sep[11,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==1, detected==0, n_firms <= 3), "undetected, small n", 3)
+b_and_e_sep[12,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==1, detected==0, n_firms > 3), "undetected, large n", 3)
+
+b_and_e_sep[13,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==1, n_firms <= 3), "population, small n", 3)
+b_and_e_sep[14,] <- calc_bryan_eckard(filter(cartels_duration_all, structured==1, n_firms > 3), "population, large n", 3)
+
+b_and_e_sep[3:5] <- round(b_and_e_sep[3:5], 2)
+b_and_e_sep$lambda <- round(b_and_e_sep$lambda, 3)
+
+write.table(b_and_e_sep, file = "analysis/data/estimations/b_and_e_sep.csv", row.names = FALSE, sep = ";")
+k <- kbl(b_and_e_sep, "latex", booktabs = T, linesep = "")
+save_kable(k, file = "analysis/data/estimations/b_and_e_sep.tex", sep = "")
+
