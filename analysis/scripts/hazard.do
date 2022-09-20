@@ -12,20 +12,37 @@ cd ~/switchdrive/Research_gues_bell/Code/simulate_collusion/analysis
 
 * pwd // show working directory
 *****************************************************************************************
+* Model I, No detection, event = death *
+* Only Population *
+clear all
+insheet using "data/duration_no_enforcement.csv", clear delimiter(;)
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+* Estimate the hazard rate
+streg n_firms, distribution(weibull)
+
+
 * Model II, Constant detection probability (structured=0), event = death *
 * Population *
 clear all
 insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+browse
 keep if structured == 0
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
 * Estimate the hazard rate
-streg n_firms theta_len, distribution(weibull)
+streg n_firms len_reduction, distribution(weibull) // fine reduction if applying for leniency: 1 - no fines. 0 - full fines. 
+// leniency = 1 makes leaving and cheating more attractive than staying in cartel
+// large n_firms increase ICC_entry and ICC_exit. 
+// Large len_reduction increase ICC_exit and shortens duration.
+//streg n_firms theta_len, distribution(weibull)
+
 * Estimate not the hazard rate, but the coefficients. e^coeff = hazard ratio
-streg n_firms theta_len, distribution(weibull) nohr
+streg n_firms len_reduction, distribution(weibull) nohr
 * predict mean time = predict mean survival time = mean duration = 1/lambda
-predict lambda_min_1, mean time  
+predict lambda_min_1, mean time  // this prediction is not reliable. it varies with different sorting of rows. do not use!
 dis lambda_min_1
 
 
@@ -37,7 +54,7 @@ keep if structured == 0 & detected == 1
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
-streg n_firms theta_len, distribution(weibull)
+streg n_firms len_reduction, distribution(weibull)
 predict lambda_min_1, mean time  
 dis lambda_min_1
 
@@ -48,9 +65,8 @@ keep if structured == 0 & detected == 0
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
-streg n_firms theta_len, distribution(weibull)
-predict lambda_min_1, mean time  
-dis lambda_min_1
+streg n_firms len_reduction, distribution(weibull)
+
 
 
 
@@ -62,8 +78,8 @@ keep if structured == 1
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
-streg n_firms theta_len, distribution(weibull)
-streg n_firms theta_len, distribution(weibull) nohr
+streg n_firms len_reduction, distribution(weibull)
+streg n_firms len_reduction, distribution(weibull) nohr
 predict lambda_min_1, mean time  
 dis lambda_min_1
 
@@ -75,7 +91,7 @@ keep if structured == 1 & detected == 1
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
-streg n_firms theta_len, distribution(weibull)
+streg n_firms len_reduction, distribution(weibull)
 predict lambda_min_1, mean time  
 dis lambda_min_1
 
@@ -86,9 +102,139 @@ keep if structured == 1 & detected == 0
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
-streg n_firms theta_len, distribution(weibull)
-predict lambda_min_1, mean time  
-dis lambda_min_1
+streg n_firms len_reduction, distribution(weibull)
+
+
+
+*******************************************************************************
+*** Separate into Small and Large Number of Firms ***
+
+* Model I, No detection, event = death *
+* Only Population *
+clear all
+insheet using "data/duration_no_enforcement.csv", clear delimiter(;)
+keep if n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms, distribution(weibull)
+
+clear all
+insheet using "data/duration_no_enforcement.csv", clear delimiter(;)
+keep if n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms, distribution(weibull)
+
+
+* Model II, Constant detection probability (structured=0), event = death *
+* Sample
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 0 & detected == 1 & n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 0 & detected == 1 & n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+* undetected cases (population - sample)
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 0 & detected == 0 & n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 0 & detected == 0 & n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+* Population *
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 0 & n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 0 & n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+
+* Model III, Increasing detection probability (structured=1), event = death *
+* Sample
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 1 & detected == 1 & n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 1 & detected == 1 & n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+* undetected cases (population - sample)
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 1 & detected == 0 & n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 1 & detected == 0 & n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+* Population *
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 1 & n_firms < 4
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+clear all
+insheet using "data/duration_enforcement_all.csv", clear delimiter(;)
+keep if structured == 1 & n_firms > 3
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+streg n_firms len_reduction, distribution(weibull)
+
+
+
 
 
 
