@@ -3,7 +3,7 @@ library(psych) # describe()
 library(dplyr)
 library(purrr)
 library(tidyr)
-library(DescTools)
+library(DescTools) # Rev() reverse order of rows and columns in a matrix
 library(gtools) # cut quantiles
 library(ggplot2)
 library(ggfortify) # time series plots
@@ -15,8 +15,8 @@ library(NCmisc) # which packages are used
 library(kableExtra)
 
 # Which packages do we use?
-p <- list.functions.in.file("analysis/scripts/simulation.R")
-summary(p)
+#p <- list.functions.in.file("analysis/scripts/simulation.R")
+#summary(p)
 
 
 
@@ -28,6 +28,7 @@ name <- paste(struc, "struc_", theta, "theta", sep = "")
 
 seed_start <- 100
 
+# EC cartels start at 1964
 allperiods <- 1000
 periodsNoLen <- allperiods/2
 periodsLen <- allperiods/2
@@ -71,7 +72,7 @@ get_deltas_r <- function(start, periods, seed) {
 ind_delta <- function(count, n_firms){
   replicate(n_firms, {count <<- count+1; get_deltas_r(r_1, allperiods, seed=count)})
 }
-x <- ind_delta(100, 3)
+#x <- ind_delta(100, 3)
 
 
 # Model 1: ICC depending on number of firms (cite Stigler 1964)
@@ -115,6 +116,8 @@ get_detection <- function(periods, rho, seed){
 }
 
 # does a firm want to be in a cartel?
+# reduce(function, vector) applies function on the first two elements of vector, then on the result of that and the third element...
+# accumulate=TRUE returns all results, accumulate=FALSE returns only last result
 get_in_cartel <- function(ind, ICC_entry, ICC_exit) {
   ind_entry <- ifelse(ind > ICC_entry, 1, 0) # ifelse keeps matrix, if_else makes big vector
   ind_exit <- ifelse(ind < ICC_exit, -1, 0)

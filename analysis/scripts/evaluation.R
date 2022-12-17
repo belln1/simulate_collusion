@@ -167,7 +167,7 @@ ggplot(pop_duration, aes(x = n_firms_factor, y = duration)) +
   xlab("number of firms") +
   ylab("duration") +
   theme_bw()
-ggsave(paste(path, "enforce_boxplot_n-firms_duration_pop_", name, "_.png", sep = ""))
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_pop_", name, ".png", sep = ""))
 
 title <- "Duration depending on rho_start, population"
 ggplot(pop_duration, aes(x = rho_start_factor, y = duration)) +
@@ -176,7 +176,7 @@ ggplot(pop_duration, aes(x = rho_start_factor, y = duration)) +
   xlab("detection probability at beginning") +
   ylab("duration") +
   theme_bw()
-ggsave(paste(path, "enforce_boxplot_rho_duration_pop_", name, "_.png", sep = ""))
+ggsave(paste(path, "enforce_boxplot_rho_duration_pop_", name, ".png", sep = ""))
 
 
 title <- "Duration depending on n firms, sample"
@@ -186,7 +186,7 @@ ggplot(sample_duration, aes(x = n_firms_factor, y = duration)) +
   xlab("number of firms") +
   ylab("duration") +
   theme_bw()
-ggsave(paste(path, "enforce_boxplot_n-firms_duration_sample_", name, "_.png", sep = ""))
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_sample_", name, ".png", sep = ""))
 
 
 title <- "Duration depending on rho_start, sample"
@@ -196,7 +196,7 @@ ggplot(sample_duration, aes(x = rho_start_factor, y = duration)) +
   xlab("detection probability at beginning") +
   ylab("duration") +
   theme_bw()
-ggsave(paste(path, "enforce_boxplot_rho_duration_sample_", name, "_.png", sep = ""))
+ggsave(paste(path, "enforce_boxplot_rho_duration_sample_", name, ".png", sep = ""))
 
 
 # Facets mit jeweils zwei Boxplots (detected, undetected) nebeneinander
@@ -208,7 +208,7 @@ ggplot(pop_duration, aes(x = n_firms_factor, y = duration)) +
   ylab("duration") +
   theme_bw() +
   facet_grid(. ~ detected)
-ggsave(paste(path, "enforce_boxplot_n-firms_duration_undet_detect_", name, "_.png", sep = ""))
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_undet_detect_", name, ".png", sep = ""))
 
 
 
@@ -220,7 +220,7 @@ ggplot(pop_duration, aes(x = rho_start_factor, y = duration)) +
   ylab("duration") +
   theme_bw() +
   facet_grid(. ~ detected)
-ggsave(paste(path, "enforce_boxplot_rho_duration_undet_detect_", name, "_.png", sep = ""))
+ggsave(paste(path, "enforce_boxplot_rho_duration_undet_detect_", name, ".png", sep = ""))
 
 
 

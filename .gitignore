@@ -11,7 +11,7 @@
 *.tex
 *.txt
 *.log
-*.csv
+#*.csv
 *.docx
 *.png
-*.rds
+#*.rds

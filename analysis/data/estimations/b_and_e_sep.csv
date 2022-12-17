@@ -1,0 +1,15 @@
+"model";"space";"theta_min_1";"theta";"lambda_min_1";"lambda";"number_alive";"size"
+1;"population, small n";5;0.2;1000;0.001;200;200
+1;"population, large n";0.46;2.17;116.16;0.009;252;2170
+2;"sample, small n";0.06;15.94;167.7;0.006;2673;15939
+2;"sample, large n";0.12;8.19;154.86;0.006;1269;8194
+2;"undetected, small n";0.27;3.73;242.69;0.004;905;3731
+2;"undetected, large n";0.08;13.1;72.19;0.014;946;13100
+2;"population, small n";0.05;19.67;181.92;0.005;3578;19670
+2;"population, large n";0.05;21.29;104;0.01;2215;21294
+3;"sample, small n";0.06;17.98;126.66;0.008;2277;17980
+3;"sample, large n";0.2;5.09;153.39;0.007;780;5086
+3;"undetected, small n";0.25;3.99;111.58;0.009;446;3994
+3;"undetected, large n";0.11;8.74;56.12;0.018;491;8741
+3;"population, small n";0.05;21.97;123.92;0.008;2723;21974
+3;"population, large n";0.07;13.83;91.9;0.011;1271;13827
