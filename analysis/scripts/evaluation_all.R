@@ -18,10 +18,17 @@ pop_duration$len_reduction <- 1 - pop_duration$theta_len
 write.table(pop_duration, file = "analysis/data/duration_enforcement_all.csv", row.names = FALSE, sep = ";")
 
 
+
+# EVALUATION
+# Read in big duration dataset
+pop_duration <- read.table("analysis/data/duration_enforcement_all.csv", header = TRUE, sep = ";")
+
+
+
 # Prepare data
-#pop_duration$n_firms_factor <- factor(pop_duration$n_firms)
+pop_duration$n_firms_factor <- factor(pop_duration$n_firms)
 #pop_duration$rho_start_factor <- factor(pop_duration$rho_start)
-#pop_duration$theta_len_factor <- factor(pop_duration$theta_len)
+pop_duration$theta_len_factor <- factor(pop_duration$theta_len)
 pop_duration$duration_quant <-  quantcut(pop_duration$duration, q = 4)
 
 
@@ -80,6 +87,186 @@ save_kable(k, file = paste("analysis/data/parms_enforcement_", name, ".tex", sep
 
 
 # Make Figures
+## Boxplot for all cartels and all models
+
+path <- "analysis/figures/boxplots/"
+name <- "pop_0struc"
+data_duration <- filter(pop_duration, structured == 0)
+ggplot(data_duration, aes(x = n_firms_factor, y = duration)) +
+  geom_boxplot() +
+  xlab("Number of Firms") +
+  ylab("Mean Duration") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_", name, ".png", sep = ""))
+
+name <- "pop_1struc"
+data_duration <- filter(pop_duration, structured == 1)
+ggplot(data_duration, aes(x = n_firms_factor, y = duration)) +
+  geom_boxplot() +
+  xlab("Number of Firms") +
+  ylab("Mean Duration") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_", name, ".png", sep = ""))
+
+data_no_enforce <- read.table("analysis/data/duration_no_enforcement.csv", header = TRUE, sep = ";")
+data_no_enforce$n_firms_factor <- factor(data_no_enforce$n_firms)
+ggplot(data_no_enforce, aes(x = n_firms_factor, y = duration)) +
+  geom_boxplot() +
+  xlab("Number of Firms") +
+  ylab("Mean Duration") +
+  theme_bw()
+ggsave(paste(path, "no_enforce_boxplot_n-firms_duration", ".png", sep = ""))
+
+
+name <- "pop_0struc"
+data_duration <- filter(pop_duration, structured == 0)
+ggplot(data_duration, aes(x = factor(len_reduction), y = duration)) +
+  geom_boxplot() +
+  xlab("Fine Reduction for Leniency") +
+  ylab("Duration") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_theta_duration_", name, ".png", sep = ""))
+
+name <- "pop_1struc"
+data_duration <- filter(pop_duration, structured == 1)
+ggplot(data_duration, aes(x = factor(len_reduction), y = duration)) +
+  geom_boxplot() +
+  xlab("Fine Reduction for Leniency") +
+  ylab("Duration") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_theta_duration_", name, ".png", sep = ""))
+
+name <- "sample_0struc"
+data_duration <- filter(pop_duration, structured == 0, detected == 1)
+ggplot(data_duration, aes(x = factor(len_reduction), y = duration)) +
+  geom_boxplot() +
+  xlab("Fine Reduction for Leniency") +
+  ylab("Duration") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_theta_duration_", name, ".png", sep = ""))
+
+name <- "sample_1struc"
+data_duration <- filter(pop_duration, structured == 1, detected == 1)
+ggplot(data_duration, aes(x = factor(len_reduction), y = duration)) +
+  geom_boxplot() +
+  xlab("Fine Reduction for Leniency") +
+  ylab("Duration") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_theta_duration_", name, ".png", sep = ""))
+
+
+# for all rho
+all_rho <- unique(pop_duration$rho_start)
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, rho_start == i)
+}
+
+
+name <- "pop_0struc"
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, structured == 0, rho_start == i)
+  p <- ggplot(data_duration, aes(x = factor(len_reduction), y = duration)) +
+    geom_boxplot() +
+    xlab("Fine Reduction for Leniency") +
+    ylab("Duration") +
+    theme_bw()
+#  print(p)
+  ggsave(paste(path, "theta/enforce_boxplot_theta_duration_", name, "_", i, "rho", ".png", sep = ""))
+}
+
+
+name <- "pop_1struc"
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, structured == 1, rho_start == i)
+  p <- ggplot(data_duration, aes(x = factor(len_reduction), y = duration)) +
+    geom_boxplot() +
+    xlab("Fine Reduction for Leniency") +
+    ylab("Duration") +
+    theme_bw()
+  #  print(p)
+  ggsave(paste(path, "theta/enforce_boxplot_theta_duration_", name, "_", i, "_rho", ".png", sep = ""))
+}
+
+name <- "sample_0struc"
+data_duration <- filter(pop_duration, structured == 0, detected == 1)
+ggplot(data_duration, aes(x = factor(n_firms), y = duration)) +
+  geom_boxplot() +
+  xlab("number of firms") +
+  ylab("duration") +
+  xlim("2","3", "4", "5", "6", "7") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_", name, ".png", sep = ""))
+
+name <- "sample_1struc"
+data_duration <- filter(pop_duration, structured == 1, detected == 1)
+ggplot(data_duration, aes(x = factor(n_firms), y = duration)) +
+  geom_boxplot() +
+  xlab("number of firms") +
+  ylab("duration") +
+  xlim("2","3", "4", "5", "6", "7") +
+  theme_bw()
+ggsave(paste(path, "enforce_boxplot_n-firms_duration_", name, ".png", sep = ""))
+
+
+
+name <- "sample_0struc"
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, structured == 0, detected == 1, rho_start == i)
+  ggplot(data_duration, aes(x = factor(n_firms), y = duration)) +
+    geom_boxplot() +
+    xlab("number of firms") +
+    ylab("duration") +
+    xlim("2","3", "4", "5", "6", "7") +
+    ylim(0, 1000) +
+    theme_bw()
+  ggsave(paste(path, "n_firms/enforce_boxplot_n-firms_duration_", name, "_", i, "_rho",
+               ".png", sep = ""))
+}
+
+name <- "pop_0struc"
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, structured == 0, rho_start == i)
+  ggplot(data_duration, aes(x = factor(n_firms), y = duration)) +
+    geom_boxplot() +
+    xlab("number of firms") +
+    ylab("duration") +
+    xlim("2","3", "4", "5", "6", "7") +
+    ylim(0, 1000) +
+    theme_bw()
+  ggsave(paste(path, "n_firms/enforce_boxplot_n-firms_duration_", name, "_", i, "_rho",
+               ".png", sep = ""))
+}
+
+name <- "sample_1struc"
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, structured == 1, detected == 1, rho_start == i)
+  ggplot(data_duration, aes(x = factor(n_firms), y = duration)) +
+    geom_boxplot() +
+    xlab("number of firms") +
+    ylab("duration") +
+    xlim("2","3", "4", "5", "6", "7") +
+    ylim(0, 1000) +
+    theme_bw()
+  ggsave(paste(path, "n_firms/enforce_boxplot_n-firms_duration_", name, "_", i, "_rho",
+ ".png", sep = ""))
+}
+
+name <- "pop_1struc"
+for (i in all_rho) {
+  data_duration <- filter(pop_duration, structured == 1, rho_start == i)
+  ggplot(data_duration, aes(x = factor(n_firms), y = duration)) +
+    geom_boxplot() +
+    xlab("number of firms") +
+    ylab("duration") +
+    xlim("2","3", "4", "5", "6", "7") +
+    ylim(0, 1000) +
+    theme_bw()
+  ggsave(paste(path, "n_firms/enforce_boxplot_n-firms_duration_", name, "_", i, "_rho",
+               ".png", sep = ""))
+}
+
+
+
 # Figure: Different ICC over all the same discount factors
 plot_deltas_n <- function(n) {
   #  count <- n*10  # plots different deltas for every graph
@@ -137,7 +324,7 @@ parms <- tibble(
 parms <- parms %>%
   arrange(n_firms, rho_start, theta_len, structured)
 
-sim_list <- simulation(1, parms[1,], 1)
+sim_list <- simulation_firms(1, parms[1,], 1)
 ICC_entry_1struc <- sim_list$ICC_entry[,5]
 ICC_exit_1struc <- sim_list$ICC_exit[,5]
 
