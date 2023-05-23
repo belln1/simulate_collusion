@@ -15,13 +15,72 @@ cd ~/switchdrive/Research_gues_bell/Code/simulate_collusion/analysis
 * Model I, No detection, event = death *
 * Only Population *
 clear all
-insheet using "data/duration_no_enforcement.csv", clear delimiter(;)
+insheet using "data/seeds_2/duration_no_enforcement.csv", clear delimiter(;)
 gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
 * Estimate the hazard rate
 streg n_firms, distribution(weibull)
 
+
+
+
+* Model IIa, IIb, IIIa, IIIb
+* Population *
+clear all
+insheet using "data/seeds_2/duration_enforcement.csv", clear delimiter(;)
+browse
+gen death = 1
+replace death = 0 if end == 1000
+//gen ln_gamma = log(gamma)
+stset duration, failure(death)
+* Estimate the hazard rate
+streg n_firms, distribution(weibull) nohr
+streg n_firms gamma, distribution(weibull) nohr
+//streg n_firms ln_gamma, distribution(weibull) nohr
+streg n_firms gamma theta leniency_periods, distribution(weibull) nohr // theta: 1 - no leniency. 0 - full leniency, no fines. 0.5 - 50% fine reduction.
+streg n_firms gamma theta structured, distribution(weibull) nohr
+streg n_firms gamma theta leniency_periods structured, distribution(weibull) nohr
+streg n_firms gamma theta leniency_periods structured rho_start, distribution(weibull) nohr 
+streg n_firms gamma leniency_periods rho_start model_2a model_3a model_3b, distribution(weibull) nohr
+//streg n_firms gamma theta rho_start model_2a model_2b model_3a model_3b, distribution(weibull) nohr
+// theta = 0 makes leaving and cheating more attractive than staying in cartel
+// large n_firms increase ICC_entry and ICC_exit. 
+// Large len_reduction increase ICC_exit and shortens duration.
+//streg n_firms theta_len, distribution(weibull)
+
+* Estimate not the hazard rate, but the coefficients. e^coeff = hazard ratio
+streg n_firms rho_start gamma theta_len structured model_2a model_2b model_3a model_3b, distribution(weibull) nohr
+
+streg n_firms rho_start gamma theta_len structured model_2b model_3a model_3b, distribution(weibull) nohr
+
+
+* Model IIa, IIb, IIIa, IIIb
+* Sample *
+clear all
+insheet using "data/seeds_2/duration_enforcement.csv", clear delimiter(;)
+//browse
+keep if detected == 1
+gen death = 1
+replace death = 0 if end == 1000
+stset duration, failure(death)
+* Estimate the hazard rate coefficient
+streg n_firms, distribution(weibull) nohr
+streg n_firms gamma, distribution(weibull) nohr
+streg n_firms gamma theta leniency_periods, distribution(weibull) nohr // theta: 1 - no leniency. 0 - full leniency, no fines. 0.5 - 50% fine reduction.
+streg n_firms gamma theta leniency_periods structured, distribution(weibull) nohr
+streg n_firms gamma theta leniency_periods structured rho_start, distribution(weibull) nohr  // Model E
+streg n_firms gamma leniency_periods rho_start model_2a model_3a model_3b, distribution(weibull) nohr
+
+* Estimate not the hazard rate, but the coefficients. e^coeff = hazard ratio
+streg n_firms rho_start gamma theta_len structured model_2a model_2b model_3a model_3b, distribution(weibull) nohr
+
+
+
+
+
+*****************************************************************************************
+*****************************************************************************************
 
 * Model II, Constant detection probability (structured=0), event = death *
 * Population *
@@ -34,6 +93,7 @@ replace death = 0 if end == 1000
 stset duration, failure(death)
 * Estimate the hazard rate
 streg n_firms len_reduction, distribution(weibull) // fine reduction if applying for leniency: 1 - no fines. 0 - full fines. 
+streg n_firms len_reduction rho_start, distribution(weibull) // fine reduction if applying for leniency: 1 - no fines. 0 - full fines. 
 // leniency = 1 makes leaving and cheating more attractive than staying in cartel
 // large n_firms increase ICC_entry and ICC_exit. 
 // Large len_reduction increase ICC_exit and shortens duration.
@@ -55,6 +115,7 @@ gen death = 1
 replace death = 0 if end == 1000
 stset duration, failure(death)
 streg n_firms len_reduction, distribution(weibull)
+streg n_firms len_reduction rho_start, distribution(weibull)
 predict lambda_min_1, mean time  
 dis lambda_min_1
 
