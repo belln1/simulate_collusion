@@ -110,7 +110,7 @@ c_pop <- rowSums(cartels_population)/(dim(cartels_population)[2] * dim(cartels_p
 sim_cartels <- ts(data = cbind(c_pop, c_det))
 colnames(sim_cartels) <- c("Population", "Sample")
 plot1 <- autoplot(sim_cartels*100) +
-#  ylim(y_axis) +
+  ylim(y_axis) +
   xlab(x_label) +
   ylab(y_label) +
   labs(caption = "a) Model I") +
@@ -131,7 +131,7 @@ c_pop <- rowSums(cartels_population)/(dim(cartels_population)[2] * dim(cartels_p
 sim_cartels <- ts(data = cbind(c_pop, c_det))
 colnames(sim_cartels) <- c("Population", "Sample")
 plot2 <- autoplot(sim_cartels*100) +
-#  ylim(y_axis) +
+  ylim(y_axis) +
   xlab(x_label) +
   ylab(y_label) +
   labs(caption = "b) Model II") +

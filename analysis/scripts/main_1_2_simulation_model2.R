@@ -63,24 +63,24 @@ for (k in 1:nrow(parms)) {
   saveRDS(allcartels_pop, file = paste("analysis/data/", seeds_dir, "/cartels/cartels_population_", k, ".rds", sep = ""))
 }
 
-# read all cartel files in and make one big array
-# array: dim = rows=periods, columns=industries, matrices=parameters
+# Read all cartel files in and make one big array
+# Array: dim = rows=periods, columns=industries, matrices=parameters
 cartels_detected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 cartels_undetected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 cartels_population <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 
-# for every parm combination, read in the matrix with 300 industries
+# For every parm combination, read in the matrix with 300 industries
 for (k in 1:nrow(parms)) {
   cartels_det <- readRDS(file = paste("analysis/data/", seeds_dir, "/cartels/cartels_detected_", k, ".rds", sep = ""))
   cartels_undet <- readRDS(file = paste("analysis/data/", seeds_dir, "/cartels/cartels_undetected_", k, ".rds", sep = ""))
   cartels_pop <- readRDS(file = paste("analysis/data/", seeds_dir, "/cartels/cartels_population_", k, ".rds", sep = ""))
   
-  # save each matrix
+  # Save each matrix
   cartels_detected[,, k] <- cartels_det
   cartels_undetected[,, k] <- cartels_undet
   cartels_population[,, k] <- cartels_pop
 }
-# save big array
+# Save big array
 saveRDS(cartels_detected, file = paste("analysis/data/", seeds_dir, "/cartels/cartels_detected.rds", sep = ""))
 saveRDS(cartels_undetected, file = paste("analysis/data/", seeds_dir, "/cartels/cartels_undetected.rds", sep = ""))
 saveRDS(cartels_population, file = paste("analysis/data/", seeds_dir, "/cartels/cartels_population.rds", sep = ""))
@@ -88,6 +88,7 @@ saveRDS(cartels_population, file = paste("analysis/data/", seeds_dir, "/cartels/
 
 
 ######################################################################
+
 # Calculate cartel durations
 cartels_duration <- combine_durations(cartels_detected, cartels_undetected, parms, model=1)
 
@@ -97,11 +98,4 @@ data_all <- add_non_collusive_industries(parms, n_industries, cartels_duration)
 # Add nonlinear variables for Lasso CV
 data <- add_nonlinears_model1(data_all)
 
-
-###--------------------------------------------------------------------------------------------------------------------------
-###--------------------------------------------------------------------------------------------------------------------------
-# TESTCASE FOR REFACTORING
-# sumstats <- describe(data, fast = FALSE)
-# file_m2 <- paste("C:/Users/bell/ZHAW/Research Collusion - General/Code/simulation/simulate_collusion_3_heck/analysis/data/test/sumstats_m2.csv", sep = "")
-# m2 <- read.table(file_m2, header = TRUE, sep = ";")
-# table(round(sumstats, 2) == round(m2, 2))
+describe(data[data$in_cartel==1,])

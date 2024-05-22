@@ -41,7 +41,7 @@ for (k in 1:nrow(parms)) {
   firms_population <- data.frame(matrix(ncol = 1000, nrow = 0))
   rho_firms <- data.frame(matrix(ncol = 1000, nrow = 0))
   
-  # array: dim = rows=periods, columns=industries, matrices=parameters
+  # Array: dim = rows=periods, columns=industries, matrices=parameters
   allcartels_det <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_undet <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_pop <- matrix(0, nrow = allperiods, ncol = n_industries)
@@ -67,7 +67,6 @@ for (k in 1:nrow(parms)) {
 }
 
 # Read all cartel files into one large array
-# array: dim = rows=periods, columns=industries, matrices=parameters
 cartels_detected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 cartels_undetected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 cartels_population <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
@@ -98,15 +97,4 @@ data_all <- add_non_collusive_industries(parms, n_industries, cartels_duration)
 
 # Add nonlinear variables for Lasso CV
 data <- add_nonlinears_model1(data_all)
-
-write.table(data, file = paste("analysis/data/", directory, "/cartels_duration.csv", sep = ""), row.names = FALSE, sep = ";")
-
-
-###--------------------------------------------------------------------------------------------------------------------------
-###--------------------------------------------------------------------------------------------------------------------------
-# TESTCASE FOR REFACTORING
-# sumstats <- describe(data, fast = FALSE)
-# file_m1 <- paste("C:/Users/bell/ZHAW/Research Collusion - General/Code/simulation/simulate_collusion_2/analysis/data/test/sumstats_m1.csv", sep = "")
-# m1 <- read.table(file_m1, header = TRUE, sep = ";")
-# table(round(sumstats, 2) == round(m1, 2))
 

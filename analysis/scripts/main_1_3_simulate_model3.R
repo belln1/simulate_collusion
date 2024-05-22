@@ -2,14 +2,9 @@ rm(list = ls())
 source(file = "analysis/scripts/functions_simulation.R")
 
 # refactor:
-# add model 1
-# add model 2
 # test with orig parms
-# back to original parms
 # delete commented code
-# delete all prints
 # delete unnecessary read and write
-# delete unnecessary packages
 
 
 # Set basic parameters  --------------------------------------------------------------
@@ -18,27 +13,24 @@ source(file = "analysis/scripts/functions_simulation.R")
 sim_seed <- 1673465635
 directory <- "model3"
 
-#allperiods <- 1000
-allperiods <- 10
+allperiods <- 1000
 periodsNoLen <- 0 # thetas remain constant for all time periods
 periodsLen <- allperiods
 r_1 <- 0.03 #interest rate
 
-#n_industries <- 300
-n_industries <- 2
+n_industries <- 300
 
-
-# n_firms_in <- 2:10
-# rho_in <- seq(0.1, 0.35, 0.05)
-# gamma_in <- c(0.7, 0.8, 0.9)
-# theta_in <- c(0, 0.5, 1)
-# struc_in <- c(0, 1)
-
-n_firms_in <- 2:5
-rho_in <- seq(0.1, 0.3, 0.1)
-gamma_in <- c(0.7, 0.8)
-theta_in <- c(0, 1)
+n_firms_in <- 2:10
+rho_in <- seq(0.1, 0.35, 0.05)
+gamma_in <- c(0.7, 0.8, 0.9)
+theta_in <- c(0, 0.5, 1)
 struc_in <- c(0, 1)
+
+# n_firms_in <- 2:5
+# rho_in <- seq(0.1, 0.3, 0.1)
+# gamma_in <- c(0.7, 0.8)
+# theta_in <- c(0, 1)
+# struc_in <- c(0, 1)
 
 
 if (!file.exists("analysis/data")) {
@@ -82,7 +74,7 @@ for (k in 1:nrow(parms)) {
 }
 
 # Read all cartel files in and make one large array
-# array: dim = rows=periods, columns=industries, matrices=parameters
+# Array: dim = rows=periods, columns=industries, matrices=parameters
 cartels_detected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 cartels_undetected <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
 cartels_population <- array(0,dim = c(allperiods, n_industries, nrow(parms)))
