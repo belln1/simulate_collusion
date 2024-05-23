@@ -7,7 +7,7 @@ Install RStudio: https://posit.co/downloads/
 
 Install the packages shown at the beginning of functions_simulation.R 
 
-## Gettin Started
+## Getting Started
 To simulate detected and undetected cartels, run 
 
 main_1_1_simulation_model1.R for Model 1
