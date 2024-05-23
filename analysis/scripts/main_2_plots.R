@@ -8,9 +8,9 @@ periodsLen <- allperiods
 timefactor <- 12
 r_1 <- 0.03 #interest rate
 
-# 5 firms, 0.15 rho
+# 5 firms, 0.15 sigma
 n_firms <- 5
-rho <- 0.15
+sigma <- 0.15
 gamma <- 0.9
 theta <- 1
 i <- 1
@@ -22,18 +22,18 @@ count <- seed_start + (i-1)*n_industries*10 + (k-1)*100
 deltas <- ts(replicate(n_firms, {count <<- count+1; get_deltas_r(r_1, allperiods, seed=count)}))
 
 ICC_no_enforc <- get_ICC_model1(n_firms)
-ICC_entry_0struc <- get_ICC_entry_model3(n_firms, rho, gamma)
-ICC_exit_0struc <- get_ICC_exit_model3(n_firms, rho, gamma, theta)
+ICC_entry_0struc <- get_ICC_entry_model3(n_firms, sigma, gamma)
+ICC_exit_0struc <- get_ICC_exit_model3(n_firms, sigma, gamma, theta)
 
 parms <- tibble(
   n_firms = n_firms,
-  rho_start = rho,
+  sigma_start = sigma,
   theta = theta,
   structured = 1,
   gamma = gamma
 )
 parms <- parms %>%
-  arrange(n_firms, rho_start, theta, structured)
+  arrange(n_firms, sigma_start, theta, structured)
 
 sim_list <- simulate_firms_model3(1, parms[1,], 1, seed_start)
 ICC_entry_1struc <- sim_list$ICC_entry[,5]
@@ -41,12 +41,12 @@ ICC_exit_1struc <- sim_list$ICC_exit[,5]
 
 
 # II and III in one plot
-# II) constant rho
+# II) constant sigma
 theta_in <- c(0.5) #0 - full leniency, 0.5 - 50% leniency
 theta = c(rep(1, periodsNoLen), rep(theta_in, periodsLen))
 
-ICC_entry <- get_ICC_entry_model3(n_firms, rho, gamma)
-ICC_exit <- get_ICC_exit_model3(n_firms, rho = rho, theta = theta, gamma = gamma)
+ICC_entry <- get_ICC_entry_model3(n_firms, sigma, gamma)
+ICC_exit <- get_ICC_exit_model3(n_firms, sigma = sigma, theta = theta, gamma = gamma)
 sim <- ts(data = cbind(ICC_no_enforc, ICC_entry, ICC_exit, deltas))
 colnames(sim) <- c("ICC without detection", "ICC entry", "ICC exit", paste("firm", 1:ncol(deltas)))
 pallete <- c('blue4', 'blue', 'red', 'lightcoral', 'aquamarine3', 'cyan4', 'brown', 'orange')
@@ -62,7 +62,7 @@ p_2 <- autoplot(sim) +
 #p_2
 
 
-# III) Increasing rho, Plot with different ICC for leniency = 0.5, Plot ICCs for firm 1
+# III) Increasing sigma, Plot with different ICC for leniency = 0.5, Plot ICCs for firm 1
 parms$theta <- 0.5
 sim_list <- simulate_firms_model3(1, parms[1,], 1, seed_start)
 sim <- ts(data = cbind(ICC_no_enforc, sim_list$ICC_entry[,1], sim_list$ICC_exit[,1], deltas))
@@ -91,6 +91,7 @@ plot_2_3
 
 ### ADJUST y axis FOR OTHER DATA ###
 y_axis <- c(0,60)
+# -------------------------
 
 
 pallete <- c('blue', 'red')
@@ -118,7 +119,7 @@ plot1 <- autoplot(sim_cartels*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot1
+#plot1
 
 # Model II
 directory <- "model2"
@@ -139,7 +140,7 @@ plot2 <- autoplot(sim_cartels*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot2
+#plot2
 plot12 <- plot1 + plot2 + plot_layout(guides = "collect")  &  theme(legend.position='bottom') & theme(legend.title = element_blank()) & scale_colour_manual(values=pallete)
 plot12
 
@@ -150,10 +151,6 @@ directory <- "model3"
 cartels_population <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[1], ".rds", sep = ""))
 cartels_detected <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[2], ".rds", sep = ""))
 parmname <- paste("analysis/data/", directory, "/parms.csv", sep = "")
-
-# cartels_population <- readRDS(file = paste("C:/Users/bell/ZHAW/Research Collusion - General/Code/simulation/simulate_collusion_1_2_constant_theta/analysis/data/", seeds_dir, "/cartels/cartels_", status_all[1], ".rds", sep = ""))
-# cartels_detected <- readRDS(file = paste("C:/Users/bell/ZHAW/Research Collusion - General/Code/simulation/simulate_collusion_1_2_constant_theta/analysis/data/", seeds_dir, "/cartels/cartels_", status_all[2], ".rds", sep = ""))
-# parmname <- paste("C:/Users/bell/ZHAW/Research Collusion - General/Code/simulation/simulate_collusion_1_2_constant_theta/analysis/data/", seeds_dir, "/parms.csv", sep = "")
 parms <- read.table(parmname, header = TRUE, sep = ";")
 
 # Model IIIa, unstructured
@@ -166,7 +163,7 @@ c_pop_unstruc <- rowSums(y_pop_unstruc)/(dim(y_pop_unstruc)[2] * dim(y_pop_unstr
 sim_cartels <- ts(data = cbind(c_pop_unstruc, c_det_unstruc))
 colnames(sim_cartels) <- c("Population", "Sample")
 plot3a <- autoplot(sim_cartels*100) +
-#  ylim(y_axis) +
+  ylim(y_axis) +
   xlab(x_label) +
   ylab(y_label) +
   labs(caption = "a) Model IIIa") +
@@ -174,7 +171,7 @@ plot3a <- autoplot(sim_cartels*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot3a
+#plot3a
 
 # Model IIIb, structured
 x_struc <- which(parms$structured == 1)
@@ -186,8 +183,7 @@ c_pop_struc <- rowSums(y_pop_struc)/(dim(y_pop_struc)[2] * dim(y_pop_struc)[3])
 sim_cartels_struc <- ts(data = cbind(c_pop_struc, c_det_struc))
 colnames(sim_cartels_struc) <- c("Population", "Sample")
 plot3b <- autoplot(sim_cartels_struc*100) +
-#  theme(text = element_text(family = "Arial")) +
-#  ylim(y_axis) +
+  ylim(y_axis) +
   xlab(x_label) +
   ylab(y_label) +
   labs(caption = "a) Model IIIb") +
@@ -195,12 +191,9 @@ plot3b <- autoplot(sim_cartels_struc*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot3b
+#plot3b
 plot3ab <- plot3a + plot3b + plot_layout(guides = "collect")  &  theme(legend.position='bottom') & theme(legend.title = element_blank()) & scale_colour_manual(values=pallete) 
 plot3ab
 
-#& theme(text = element_text(family = "Times New Roman")) 
-#ggsave(filename="plot3ab.eps", plot = last_plot(), device = cairo_ps, width = 7, height = 4.5)
-#dev.off()
 
 

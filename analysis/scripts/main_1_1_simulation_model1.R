@@ -1,24 +1,25 @@
 rm(list = ls())
 source(file = "analysis/scripts/functions_simulation.R")
+# MODEL 1 #
+
 
 # Set basic parameters  --------------------------------------------------------------
 
+sim_seed <- 1673465635 # Set seed for reproducibility  
+directory <- "model1"
 allperiods <- 1000
-timefactor <- 12
 r_1 <- 0.03 #interest rate
 
 n_industries <- 300
 
-sim_seed <- 1673465635 # seed for enforcement 
-directory <- "model1"
 
-
-# Simulation  --------------------------------------------------------------
-
-# Simulate deltas. set seed different for every industry and every row of parms
 n_max <- 10 # max number of firms
 n_firms_in <- 2:n_max
-rho_in <- seq(0.1, 0.35, 0.05)
+sigma_in <- seq(0.1, 0.35, 0.05)
+
+# ------------------------------------------------------------------------------------
+
+# Create data folder
 
 if (!file.exists("analysis/data")) {
   dir.create("analysis/data")
@@ -30,8 +31,8 @@ if (!file.exists(paste("analysis/data/", directory, "/cartels", sep = ""))) {
   dir.create(paste("analysis/data/", directory, "/cartels", sep = ""))
 }  
 
-parms <- combine_parms(n_firms_in, rho_in)
-parms$ICC <- get_ICC_model1(parms$n_firms)
+# Build dataframe with all possible parameter combinations from above
+parms <- combine_parms(n_firms_in, sigma_in)
 write.table(parms, file = paste("analysis/data/", directory, "/parms.csv", sep = ""), row.names = FALSE, sep = ";")
 
 
@@ -39,7 +40,7 @@ for (k in 1:nrow(parms)) {
   firms_detected <- data.frame(matrix(ncol = 1000, nrow = 0))
   firms_undetected <- data.frame(matrix(ncol = 1000, nrow = 0))
   firms_population <- data.frame(matrix(ncol = 1000, nrow = 0))
-  rho_firms <- data.frame(matrix(ncol = 1000, nrow = 0))
+  sigma_firms <- data.frame(matrix(ncol = 1000, nrow = 0))
   
   # Array: dim = rows=periods, columns=industries, matrices=parameters
   allcartels_det <- matrix(0, nrow = allperiods, ncol = n_industries)

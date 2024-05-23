@@ -1,18 +1,12 @@
 rm(list = ls())
 source(file = "analysis/scripts/functions_simulation.R")
-
-# refactor:
-# test with orig parms
-# delete commented code
-# delete unnecessary read and write
+# MODEL 3 #
 
 
 # Set basic parameters  --------------------------------------------------------------
 
-# Set seed for reproducibility 
-sim_seed <- 1673465635
+sim_seed <- 1673465635 # Set seed for reproducibility 
 directory <- "model3"
-
 allperiods <- 1000
 periodsNoLen <- 0 # thetas remain constant for all time periods
 periodsLen <- allperiods
@@ -21,18 +15,15 @@ r_1 <- 0.03 #interest rate
 n_industries <- 300
 
 n_firms_in <- 2:10
-rho_in <- seq(0.1, 0.35, 0.05)
+sigma_in <- seq(0.1, 0.35, 0.05)
 gamma_in <- c(0.7, 0.8, 0.9)
 theta_in <- c(0, 0.5, 1)
 struc_in <- c(0, 1)
 
-# n_firms_in <- 2:5
-# rho_in <- seq(0.1, 0.3, 0.1)
-# gamma_in <- c(0.7, 0.8)
-# theta_in <- c(0, 1)
-# struc_in <- c(0, 1)
 
+# ------------------------------------------------------------------------------------
 
+# Create data folder
 if (!file.exists("analysis/data")) {
   dir.create("analysis/data")
 }  
@@ -43,11 +34,14 @@ if (!file.exists(paste("analysis/data/", directory, "/cartels", sep = ""))) {
   dir.create(paste("analysis/data/", directory, "/cartels", sep = ""))
 }  
 
-parms <- combine_parms_model3(n_firms_in, rho_in, gamma_in, theta_in, struc_in)
+# Build dataframe with all possible parameter combinations from above
+parms <- combine_parms_model3(n_firms_in, sigma_in, gamma_in, theta_in, struc_in)
 
 # Saved parameters are needed for plots
 write.table(parms, file = paste("analysis/data/", directory, "/parms.csv", sep = ""), row.names = FALSE, sep = ";")
 
+
+# Simulation loop: for all row in parameter combinations simulate 300 different industries
 for (k in 1:nrow(parms)) {
   allcartels_det <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_undet <- matrix(0, nrow = allperiods, ncol = n_industries)
@@ -106,13 +100,4 @@ data_all <- add_non_collusive_industries(parms, n_industries, cartels_duration)
 # Add nonlinear variables for Lasso CV
 data <- add_nonlinears_model3(data_all)
 
-
-###--------------------------------------------------------------------------------------------------------------------------
-###--------------------------------------------------------------------------------------------------------------------------
-# TESTCASE FOR REFACTORING
-sumstats <- describe(data, fast = FALSE)
-sumstats
-file_m3 <- paste("C:/Users/bell/ZHAW/Research Collusion - General/Code/simulation/simulate_collusion_1_2_constant_theta/analysis/data/test/sumstats_m3.csv", sep = "")
-m3 <- read.table(file_m3, header = TRUE, sep = ";")
-table(round(sumstats, 2) == round(m3, 2)) #364
-
+write.table(data, file = paste("analysis/data/", directory, "/cartels_duration.csv", sep = ""), row.names = FALSE, sep = ";")
