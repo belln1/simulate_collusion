@@ -7,6 +7,7 @@ Install RStudio: https://posit.co/downloads/
 
 Install the packages shown at the beginning of functions_simulation.R 
 
+## Gettin Started
 To simulate detected and undetected cartels, run 
 
 main_1_1_simulation_model1.R for Model 1
@@ -20,4 +21,4 @@ Change parameters at the beginning of each simulation file as needed.
 To generate plots, run
 main_2_plot.R
 
-For questions and comments: bell@zhaw.ch
+Questions and comments: bell@zhaw.ch
