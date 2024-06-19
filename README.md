@@ -1,5 +1,7 @@
 # Program for Simulating Collusion
 
+[![DOI](https://zenodo.org/badge/511030201.svg)](https://zenodo.org/doi/10.5281/zenodo.12162406)
+
 ## Requirements
 Install R: https://cran.rstudio.com/
 
