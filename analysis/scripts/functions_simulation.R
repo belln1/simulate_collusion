@@ -71,11 +71,21 @@ get_ICC_model1 <- function(n) {
 }
 
 # Model 3: ICC with fines and leniency (Bos/Davies/Harrington/Ormosi(2018)
-get_ICC_entry_model3 <- function(n, sigma, gamma){
-  return(1-((1-sigma)/(n+sigma*gamma-sigma)))
+# get_ICC_entry_model3 <- function(n, sigma, gamma){
+#   return(1-((1-sigma)/(n+sigma*gamma-sigma)))
+# }
+# revised version: same entry und exit ICC
+get_sigma_all_t <- function(sigma_t){
+  1 - (1-sigma_t)^200
 }
-get_ICC_exit_model3 <- function(n, sigma, gamma, theta){
-  return(1-((1-sigma)/(n+sigma*gamma-theta*sigma*gamma-sigma)))
+
+get_ICC_entry_model3 <- function(n, sigma_t, gamma, theta){
+  sigma <- get_sigma_all_t(sigma_t)
+  1-((1-sigma)/(n+sigma*gamma-theta*sigma*gamma-sigma))
+}
+get_ICC_exit_model3 <- function(n, sigma_t, gamma, theta){
+  sigma <- get_sigma_all_t(sigma_t)
+  1-((1-sigma)/(n+sigma*gamma-theta*sigma*gamma-sigma))
 }
 
 increase_sigma <- function(sigma, n_times_caught) {
@@ -92,13 +102,19 @@ get_undetected <- function(firms_in_cartel, detection){
 
 get_detection <- function(periods, sigma, seed){
   set.seed(seed)
-  x <- matrix(as.numeric(runif(periods) <= 20*sigma/allperiods), nrow = periods)
+#  x <- matrix(as.numeric(runif(periods) <= 20*sigma/allperiods), nrow = periods)
+  x <- matrix(as.numeric(runif(periods) <= sigma), nrow = periods)
 }
+
+# sigma = Prob(at least once found during cartel duration) = 1 - ((1-p_t)^duration)
+# p_t = Prob(found in time t) = 1 - ((1-sigma)^(1/duration)) # formular for sigma, solved for p_t
+
 
 # In Model 2, detection depends on n_firms and sigma
 get_detection_model2 <- function(periods, sigma, d_nfirms, seed){
   set.seed(seed)
-  x <- matrix(as.numeric(runif(periods) <= 20*sigma*parms$d_nfirms/allperiods), nrow = periods)
+#  x <- matrix(as.numeric(runif(periods) <= 20*sigma*parms$d_nfirms/allperiods), nrow = periods) # former version
+  x <- matrix(as.numeric(runif(periods) <= sigma*parms$d_nfirms), nrow = periods) # revised version, more intuitive formular
 }
 
 
@@ -122,20 +138,20 @@ check_firm_share <- function(firms, firm_share){
 
 
 # MODEL 1 and 2: k is parm row and needed for seed
-simulate_firms <- function(i, parms, k, seed_start, model) {
+simulate_firms <- function(i, parms, k, seed_start, model, min_share) {
   sigma <- matrix(parms$sigma_start, nrow = allperiods, ncol = parms$n_firms)
   n_times_caught <- matrix(0, nrow = allperiods, ncol = parms$n_firms)
   ICC_entry <- get_ICC_model1(parms$n_firms)
   ICC_exit <- ICC_entry
 
   # Simulate deltas. set seed different for every industry and every row of parms
-  count <- seed_start + (i-1)*n_industries*10 + (k-1)*100
+  count <- k*1000000+i*1000 + seed_start
   all_ind_delta <- ind_delta(count, parms$n_firms)
   
   # Who wants to be in cartel?
   in_cartel <- get_in_cartel(all_ind_delta, ICC_entry, ICC_exit)
   # Who is in cartel? Allow for incomplete cartels
-  firms_in_cartel <- check_firm_share(in_cartel, 0.8) * in_cartel
+  firms_in_cartel <- check_firm_share(in_cartel, min_share) * in_cartel
   
   if (model==2){
     detection <- get_detection_model2(allperiods, sigma, seed=count)
@@ -180,22 +196,22 @@ simulate_firms <- function(i, parms, k, seed_start, model) {
 
 
 # MODEL 3: k is parm row and needed for seed
-simulate_firms_model3 <- function(i, parms, k, seed_start) {
+simulate_firms_model3 <- function(i, parms, k, seed_start, min_share) {
   gamma = parms$gamma
   theta = c(rep(1, periodsNoLen), rep(parms$theta, periodsLen))
   sigma <- matrix(parms$sigma_start, nrow = allperiods, ncol = parms$n_firms)
   n_times_caught <- matrix(0, nrow = allperiods, ncol = parms$n_firms)
-  ICC_entry <- get_ICC_entry_model3(parms$n_firms, sigma, gamma)
+  ICC_entry <- get_ICC_entry_model3(parms$n_firms, sigma, gamma, theta)
   ICC_exit <- get_ICC_exit_model3(parms$n_firms, sigma, gamma, theta)
   
   # Simulate deltas. set seed different for every industry and every row of parms
-  count <- seed_start + (i-1)*n_industries*10 + (k-1)*100
+  count <- k*1000000+i*1000 + seed_start
   all_ind_delta <- ind_delta(count, parms$n_firms)
   
   # Who wants to be in cartel?
   in_cartel <- get_in_cartel(all_ind_delta, ICC_entry, ICC_exit)
   # Who is in cartel? allow for incomplete cartels
-  firms_in_cartel <- check_firm_share(in_cartel, 0.8) * in_cartel
+  firms_in_cartel <- check_firm_share(in_cartel, min_share) * in_cartel
   
   detection <- get_detection(allperiods, sigma, seed=count)
   
@@ -229,10 +245,10 @@ simulate_firms_model3 <- function(i, parms, k, seed_start) {
         # Row-wise matrix multiplication with vector
         change <- sweep(n_times_caught[range,], MARGIN = 2, (firms_in_cartel[j,] * detection[j,]), `*`)
         sigma[range,] = increase_sigma(sigma[range,], change)
-        ICC_entry[range,] <- get_ICC_entry_model3(parms$n_firms, sigma[range,], gamma)
+        ICC_entry[range,] <- get_ICC_entry_model3(parms$n_firms, sigma[range,], gamma, theta[range])
         ICC_exit[range,] <- get_ICC_exit_model3(parms$n_firms, sigma[range,], gamma, theta[range])
         in_cartel[range,] <- get_in_cartel(all_ind_delta[range,], ICC_entry[range,], ICC_exit[range,])
-        firms_in_cartel[range,] <- check_firm_share(in_cartel[range,], 0.8) * in_cartel[range,] # make a function out of this
+        firms_in_cartel[range,] <- check_firm_share(in_cartel[range,], min_share) * in_cartel[range,] # make a function out of this
         count = count + j
         detection[range,] <- get_detection(allperiods-j, sigma[range,], seed=count)
       }
@@ -268,15 +284,15 @@ get_cartel_duration <- function(cartels) {
   starttimes <- get_starttimes(cartels)
   endtimes <- get_endtimes(cartels)
   start <- as_tibble(which(starttimes==1, arr.ind = TRUE))
-  start <- rename(start, "start" = row)
+  start <- dplyr::rename(start, "start" = row)
   end <- as_tibble(which(endtimes==1, arr.ind = TRUE))
-  end <- rename(end, "end" = row)
+  end <- dplyr::rename(end, "end" = row)
   df <- cbind(start, end=end$end)
   df$duration <- df$end - df$start + 1
   # Logarithm of duration: log(n+1)
   df$lduration <- log(df$duration+1)
   df <- df %>%
-    rename(industry = col) %>%
+    dplyr::rename(industry = col) %>%
     group_by(industry) %>%
     arrange(industry, start) %>%  # order rows
     relocate(industry, start, end, duration)  # order columns
@@ -288,6 +304,7 @@ get_enforcement_duration <- function(cartels, parms, model) {
   for (i in 1:nrow(parms)) {
     cd[[i]]$n_firms <- parms$n_firms[i]
     cd[[i]]$sigma_start <- parms$sigma_start[i]
+    cd[[i]]$sigma_all_t <- get_sigma_all_t(parms$sigma_start[i])
     cd[[i]]$parm_id <- i
     if (model==3){
       cd[[i]]$theta <- parms$theta[i]
@@ -301,18 +318,18 @@ get_enforcement_duration <- function(cartels, parms, model) {
 combine_durations <- function(cartels_detected, cartels_undetected, parms, model){
   cartels_detected_duration <- get_enforcement_duration(cartels_detected, parms, model) 
   df <- cartels_detected_duration %>%
-    mutate(detected = 1,
+    dplyr::mutate(detected = 1,
            nTc = 1) %>%
     group_by(industry, parm_id) %>%
     arrange(start) %>%
-    mutate(nTc = cumsum(nTc)) %>%
+    dplyr::mutate(nTc = cumsum(nTc)) %>%
     relocate(industry, parm_id, detected, nTc) %>%
     arrange(parm_id, industry, nTc)
   cartels_detected_duration <- df
   
   cartels_undetected_duration <- get_enforcement_duration(cartels_undetected, parms, model) 
   df <- cartels_undetected_duration %>%
-    mutate(detected = 0,
+    dplyr::mutate(detected = 0,
            nTc = 0) %>%
     relocate(industry, parm_id, detected, nTc) %>%
     arrange(parm_id, industry, nTc)
@@ -325,9 +342,9 @@ combine_durations <- function(cartels_detected, cartels_undetected, parms, model
            in_cartel = 1) %>%
     group_by(parm_id, industry) %>%
     arrange(start) %>%
-    mutate(cartel = cumsum(cartel)) %>%
+    dplyr::mutate(cartel = cumsum(cartel)) %>%
     arrange(parm_id, industry, start) %>%
-    mutate(nTc = ifelse((detected == 0 & cartel > 1), lag(nTc), nTc),
+    dplyr::mutate(nTc = ifelse((detected == 0 & cartel > 1), lag(nTc), nTc),
            rep_off = ifelse(nTc > 1, 1, 0)) %>%
     arrange(industry, parm_id, start) %>%
     relocate(parm_id, industry, cartel, detected, nTc, rep_off, start)
@@ -355,19 +372,21 @@ add_non_collusive_industries <- function(parms, n_industries, cartels_duration) 
     replace(is.na(data_all), 0) %>%
     relocate(industry, parm_id, cartel) %>%
     group_by(parm_id, industry) %>%
-    mutate(industry_id = cur_group_id()) %>%
+    dplyr::mutate(industry_id = cur_group_id()) %>%
     arrange(parm_id, industry, start)
   data_all <- df
+  data_all$sigma_all_t  <- get_sigma_all_t(data_all$sigma_start)
+  data_all
 }
 
-# Add nonlinear variables, used for Lasso CV - Model 1
+# Add nonlinear variables, used for Lasso CV - Model 1 and 2
 add_nonlinears_model1 <- function(data) {
   data <- data %>%
     mutate(nfirms2 = n_firms^2,
            nfirms3 = n_firms^3,
-           sigma2 = sigma_start^2,
-           sigma3 = sigma_start^3,
-           nfirms_sigma = n_firms * sigma_start) %>%
+           sigma2 = sigma_all_t^2,
+           sigma3 = sigma_all_t^3,
+           nfirms_sigma = n_firms * sigma_all_t) %>%
     arrange(industry, parm_id, start)
 }
 
@@ -376,11 +395,11 @@ add_nonlinears_model3 <- function(data) {
   data <- data %>%
     mutate(nfirms2 = n_firms^2,
            nfirms3 = n_firms^3,
-           sigma2 = sigma_start^2,
-           sigma3 = sigma_start^3,
+           sigma2 = sigma_all_t^2,
+           sigma3 = sigma_all_t^3,
            gamma2 = gamma^2,
            gamma3 = gamma^3,
-           nfirms_sigma = n_firms * sigma_start,
+           nfirms_sigma = n_firms * sigma_all_t,
            nfirms_theta = n_firms * theta) %>%
     arrange(industry, parm_id, start)
 }

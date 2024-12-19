@@ -5,17 +5,22 @@ source(file = "analysis/scripts/functions_simulation.R")
 
 # Set basic parameters  --------------------------------------------------------------
 
-sim_seed <- 1673465635 # Set seed for reproducibility  
-directory <- "model1"
+# Set seed for reproducibility  
+sim_seed <- 123 
+directory <- "model1_seed123" 
+
 allperiods <- 1000
 r_1 <- 0.03 #interest rate
+#min_share <- 0.8 # minimum percentage of firms needed to form a cartel - former version with incomplete cartels
+min_share <- 1 # minimum percentage of firms needed to form a cartel - revised version with complete cartels
 
 n_industries <- 300
 
-
 n_max <- 10 # max number of firms
 n_firms_in <- 2:n_max
-sigma_in <- seq(0.1, 0.35, 0.05)
+sigma_all <- seq(0.1, 0.35, 0.05)
+sigma_t <- 1 - (1-sigma_all)^(1/200) # 200 is an approximation of mean duration, in simulation run with sigma=0
+
 
 # ------------------------------------------------------------------------------------
 
@@ -32,7 +37,7 @@ if (!file.exists(paste("analysis/data/", directory, "/cartels", sep = ""))) {
 }  
 
 # Build dataframe with all possible parameter combinations from above
-parms <- combine_parms(n_firms_in, sigma_in)
+parms <- combine_parms(n_firms_in, sigma_t)
 write.table(parms, file = paste("analysis/data/", directory, "/parms.csv", sep = ""), row.names = FALSE, sep = ";")
 
 
@@ -40,15 +45,14 @@ for (k in 1:nrow(parms)) {
   firms_detected <- data.frame(matrix(ncol = 1000, nrow = 0))
   firms_undetected <- data.frame(matrix(ncol = 1000, nrow = 0))
   firms_population <- data.frame(matrix(ncol = 1000, nrow = 0))
-  sigma_firms <- data.frame(matrix(ncol = 1000, nrow = 0))
-  
+
   # Array: dim = rows=periods, columns=industries, matrices=parameters
   allcartels_det <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_undet <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_pop <- matrix(0, nrow = allperiods, ncol = n_industries)
   
   for (i in 1:n_industries) {
-    sim_list <- simulate_firms(i, parms[k,], k, sim_seed, model=1) 
+    sim_list <- simulate_firms(i, parms[k,], k, sim_seed, model=1, min_share) 
     
     firms_det <- get_sample(sim_list$firms, sim_list$detection)
     firms_undet <- get_undetected(sim_list$firms, sim_list$detection)
@@ -91,11 +95,17 @@ saveRDS(cartels_population, file = paste("analysis/data/", directory, "/cartels/
 
 ######################################################################
 # Calculate cartel durations
+#directory = "model1"
+parms <- read.table(file = paste("analysis/data/", directory, "/parms.csv", sep = ""), header = TRUE, sep = ";")
+cartels_undetected <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_undetected.rds", sep = ""))
+cartels_detected <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_detected.rds", sep = ""))
+
 cartels_duration <- combine_durations(cartels_detected, cartels_undetected, parms, model=1)
 
 # Add industries with 0 cartels for Heckman Selection Correction
 data_all <- add_non_collusive_industries(parms, n_industries, cartels_duration)
 
 # Add nonlinear variables for Lasso CV
-data <- add_nonlinears_model1(data_all)
+data <- add_nonlinears_model1(cartels_duration)
 
+write.table(data, file = paste("analysis/data/", directory, "/cartels_duration.csv", sep = ""), row.names = FALSE, sep = ";")
