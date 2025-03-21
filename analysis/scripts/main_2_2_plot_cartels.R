@@ -3,10 +3,10 @@ source(file = "analysis/scripts/functions_simulation.R")
 
 # PLOT: ALL CARTELS OVER TIME
 # #font_import() only do this one time - it takes a while
-loadfonts(device = "postscript")  # this works when saving as .eps or .png, together with device=cairo_ps (see below)
+#loadfonts(device = "postscript")  # this works when saving as .eps or .png, together with device=cairo_ps (see below)
 
 ### ADJUST y axis FOR OTHER DATA ###
-y_axis <- c(0,60)
+y_axis <- c(0,8)
 # -------------------------
 
 pallete <- c('blue', 'red')
@@ -16,9 +16,8 @@ status_all <- c("population", "detected", "undetected")
 options(repr.plot.width =5.5, repr.plot.height =6)
 
 # Model I
-sim_seed <- 123 #replace
-directory <- "model1_seed123"
-#directory <- "model1"
+directory <- "smooth_r0_1_model1_100nf_seed123_set" 
+
 cartels_population <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[1], ".rds", sep = ""))
 cartels_detected <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[2], ".rds", sep = ""))
 parmname <- paste("analysis/data/", directory, "/parms.csv", sep = "")
@@ -36,20 +35,12 @@ plot1 <- autoplot(sim_cartels*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot1
-sim_cartels[1:10,]
-mean(c_pop) # average share of cartels:  0.4514812
-mean(c_det) # average share of detected cartels: 0.1753722
-
-# df <- get_enforcement_duration(cartels_population, parms, model=1)
-# df <- arrange(df, n_firms)
-# mean(df$duration)
-# df1 <- filter(df, n_firms==2)
+mean(sim_cartels[,'Population'])
+mean(c_pop) # average share of cartels:  0.5182764
+mean(c_det) # average share of detected cartels: 0.178117
 
 # Model II
-#directory <- "model2"
-sim_seed <- 123 #replace
-directory <- "model2_seed123"
+directory <- "smooth_r0_1_model2_100nf_seed123_set" 
 
 cartels_population <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[1], ".rds", sep = ""))
 cartels_detected <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[2], ".rds", sep = ""))
@@ -70,21 +61,12 @@ plot2 <- autoplot(sim_cartels*100) +
   ) 
 plot2
 plot12 <- plot1 + plot2 + plot_layout(guides = "collect")  &  theme(legend.position='bottom') & theme(legend.title = element_blank()) & scale_colour_manual(values=pallete)
-plot12
-sim_cartels <- ts(data = cbind(c_pop, c_det))
-mean(c_pop) #  0.4520279
-mean(c_det) # 0.07217642
-
-# df <- get_enforcement_duration(cartels_population, parms, model=2)
-# df <- arrange(df, n_firms)
-# mean(df$duration)
-
-
+mean(c_pop) 
+mean(c_det) 
 
 # Model III
-#directory <- "model3"
-seed <- 123
-directory <- "model3_seed123"
+directory <- "smooth_r0_1_model3_100nf_seed123_set" 
+
 cartels_population <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[1], ".rds", sep = ""))
 cartels_detected <- readRDS(file = paste("analysis/data/", directory, "/cartels/cartels_", status_all[2], ".rds", sep = ""))
 parmname <- paste("analysis/data/", directory, "/parms.csv", sep = "")
@@ -108,10 +90,8 @@ plot3a <- autoplot(sim_cartels*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot3a
-mean(c_pop_unstruc) # 0.3350716
-mean(c_det_unstruc) # 0.1228931
-
+mean(c_pop_unstruc) 
+mean(c_det_unstruc) 
 
 # Model IIIb, structured
 x_struc <- which(parms$structured == 1)
@@ -131,23 +111,15 @@ plot3b <- autoplot(sim_cartels_struc*100) +
     plot.caption = element_text(hjust = 0.5, vjust = 0, size = 10), # move caption to the middle
     axis.title = element_text(size = 10)
   ) 
-plot3b
 plot3ab <- plot3a + plot3b + plot_layout(guides = "collect")  &  theme(legend.position='bottom') & theme(legend.title = element_blank()) & scale_colour_manual(values=pallete) 
-plot3ab
-mean(c_pop_struc) # 0.3076695
-mean(c_det_struc) # 0.1246025
-
-df <- get_enforcement_duration(cartels_population, parms, model=3)
-df <- arrange(df, n_firms)
-mean(df$duration)
-
+mean(c_pop_struc)
+mean(c_det_struc) 
 
 ## PLOT all in one plot
 plot_all <- plot1 + plot2 + plot3a + plot3b + plot_layout(guides = "collect")  &  theme(legend.position='bottom') & theme(legend.title = element_blank()) & scale_colour_manual(values=pallete) & theme(text = element_text(family = "Times New Roman"))
 plot_all
 # ggsave(filename="analysis/figures/Fig2_Cartels.eps", plot = last_plot(), device = cairo_ps, width = 7, height = 7)
 # ggsave(filename="analysis/figures/Fig2_Cartels.png", plot = last_plot(), width = 7, height = 7)
-
 
 
 

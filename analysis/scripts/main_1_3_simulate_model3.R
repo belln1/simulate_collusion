@@ -1,32 +1,32 @@
 rm(list = ls())
 source(file = "analysis/scripts/functions_simulation.R")
 # MODEL 3 #
-print(paste("start: ", Sys.time()))
-
 
 # Set basic parameters  --------------------------------------------------------------
 
 # Set seed for reproducibility  
 sim_seed <- 123 
-directory <- "model3_seed123" 
+set.seed(sim_seed)
+directory <- "smooth_r0_1_model3_100nf_seed123_set" 
 
 allperiods <- 1000
-r_1 <- 0.03 #interest rate
-#min_share <- 0.8 # minimum percentage of firms needed to form a cartel - former version with incomplete cartels
-min_share <- 1 # minimum percentage of firms needed to form a cartel - revised version with complete cartels
+#r_1 <- 0.03 #interest rate (Version 1, 2)
+r_min <- 0.001
+r_max <- 0.1
+#min_share <- 0.8 # minimum percentage of firms needed to form a cartel - former version with incomplete cartels (firmlevel, Version 1)
+min_share <- 1 # minimum percentage of firms needed to form a cartel - revised version with complete cartels (firmlevel, Version 2)
 
 periodsNoLen <- 0 # thetas remain constant for all time periods
 periodsLen <- allperiods
 
 n_industries <- 300
 
-n_firms_in <- 2:10
+n_firms_in <- 2:100
 sigma_all <- seq(0.1, 0.35, 0.05)
 sigma_t <- 1 - (1-sigma_all)^(1/200) # 200 is an approximation of mean duration, in simulation run with sigma=0
 gamma_in <- c(0.7, 0.8, 0.9)
 theta_in <- c(0, 0.5, 1)
 struc_in <- c(0, 1)
-
 
 # ------------------------------------------------------------------------------------
 
@@ -44,33 +44,36 @@ if (!file.exists(paste("analysis/data/", directory, "/cartels", sep = ""))) {
 # Build dataframe with all possible parameter combinations from above
 parms <- combine_parms_model3(n_firms_in, sigma_t, gamma_in, theta_in, struc_in)
 
-all_seeds <- array(0,dim = c(nrow(parms), n_industries, allperiods))
-
-
 # Saved parameters are needed for plots
 write.table(parms, file = paste("analysis/data/", directory, "/parms.csv", sep = ""), row.names = FALSE, sep = ";")
 
-# Simulation loop: for all row in parameter combinations simulate 300 different industries
+# Simulation loop: for all rows in parameter combinations simulate 300 different industries
 for (k in 1:nrow(parms)) {
   allcartels_det <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_undet <- matrix(0, nrow = allperiods, ncol = n_industries)
   allcartels_pop <- matrix(0, nrow = allperiods, ncol = n_industries)
   
   for (i in 1:n_industries) {
-    sim_list <- simulate_firms_model3(i, parms[k,], k, sim_seed, min_share) 
-    
-    firms_det <- get_sample(sim_list$firms, sim_list$detection)
-    firms_undet <- get_undetected(sim_list$firms, sim_list$detection)
-    firms_pop <- sim_list$firms
-    cartels_det <- ifelse(rowSums(firms_det)>0, 1, 0)
-    cartels_undet <- ifelse(rowSums(firms_undet)>0, 1, 0)
-    cartels_pop <- ifelse(rowSums(firms_pop)>0, 1, 0)
-    
+    # code in comments can be used for firmlevel, Version 1, 2
+    #sim_list <- simulate_firms_model3(i, parms[k,], k, sim_seed, min_share) 
+    sim_list <- simulate_industry_model3(i, parms[k,], k, sim_seed, min_share) 
+
+    # firms_det <- get_sample(sim_list$firms, sim_list$detection)
+    # firms_undet <- get_undetected(sim_list$firms, sim_list$detection)
+    # firms_pop <- sim_list$firms
+    # cartels_det <- ifelse(rowSums(firms_det)>0, 1, 0)
+    # cartels_undet <- ifelse(rowSums(firms_undet)>0, 1, 0)
+    # cartels_pop <- ifelse(rowSums(firms_pop)>0, 1, 0)
+
+    cartels_det <- get_sample(sim_list$cartels, sim_list$detection)
+    cartels_undet <- get_undetected(sim_list$cartels, sim_list$detection)
+    cartels_pop <- sim_list$cartels
     allcartels_det[, i] <- cartels_det
     allcartels_undet[, i] <- cartels_undet
     allcartels_pop[, i] <- cartels_pop
+    # print(mean(cartels_undet))
+    # print(mean(cartels_det))
   }
-  
   saveRDS(allcartels_det, file = paste("analysis/data/", directory, "/cartels/cartels_detected_", k, ".rds", sep = ""))
   saveRDS(allcartels_undet, file = paste("analysis/data/", directory, "/cartels/cartels_undetected_", k, ".rds", sep = ""))
   saveRDS(allcartels_pop, file = paste("analysis/data/", directory, "/cartels/cartels_population_", k, ".rds", sep = ""))
